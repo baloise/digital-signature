@@ -1,0 +1,10 @@
+<p>
+$body
+</p>
+$signers <br/>
+$protectedContent <br/>
+<pre>
+#foreach( $key in $context.keys )
+    $key = $context.get($key) 
+#end
+</pre>

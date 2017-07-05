@@ -15,6 +15,9 @@ public class DigitalSignatureComponentImpl implements DigitalSignatureComponent
     @ComponentImport
     private final ApplicationProperties applicationProperties;
 
+    public DigitalSignatureComponentImpl() {
+    	this(null);
+    }
     @Inject
     public DigitalSignatureComponentImpl(final ApplicationProperties applicationProperties)
     {
