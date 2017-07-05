@@ -21,7 +21,7 @@ public class DigitalSignatureMacro implements Macro {
 	
 	@Override
 	public BodyType getBodyType() {
-		 return BodyType.NONE; 
+		 return BodyType.PLAIN_TEXT; 
 	}
 
 	@Override
