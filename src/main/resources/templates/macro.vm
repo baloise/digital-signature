@@ -1,6 +1,9 @@
 <p>
 $body
 </p>
+<pre>
+$body
+</pre>
 $signers <br/>
 $protectedContent <br/>
 <pre>
