@@ -12,9 +12,7 @@
 	<resource type="i18n" name="i18n" location="digital-signature" />
 
 	<component-import key="bandanaManager" name="Bandana manager" interface="com.atlassian.bandana.BandanaManager"/>
- 	<!-- 
  	<component-import key="userManager" name="User manager" interface="com.atlassian.sal.api.user.UserManager" />
- 	 -->
  
 	<!-- add our web resources -->
 	<web-resource key="digital-signature-resources" name="digital-signature Web Resources">

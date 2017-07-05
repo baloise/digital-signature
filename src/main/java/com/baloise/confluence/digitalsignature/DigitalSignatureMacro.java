@@ -22,14 +22,14 @@ import com.atlassian.sal.api.user.UserProfile;
 @Scanned
 public class DigitalSignatureMacro implements Macro {
 	private BandanaManager bandanaManager;
-//	private UserManager userManager;
+	private UserManager userManager;
 	
 	@Autowired
 	public DigitalSignatureMacro(@ComponentImport BandanaManager bandanaManager
-//			, @ComponentImport UserManager userManager
+			, @ComponentImport UserManager userManager
 			) {
 		this.bandanaManager = bandanaManager;
-//		this.userManager = userManager;
+		this.userManager = userManager;
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("body",  body);
 		    String signers = map.get("signers");
 			context.put("signers",  signers);
-//			context.put("signerProfiles",  getProfiles(signers));
+			context.put("signerProfiles",  getProfiles(signers));
 		    context.put("protectedContent",  map.get("protectedContent"));
 		    context.put("context", context);
 		    return getRenderedTemplate("templates/macro.vm", context);
@@ -56,14 +56,14 @@ public class DigitalSignatureMacro implements Macro {
 		
 	}
 
-//	private List<UserProfile> getProfiles(String signers) {
-//		String[] split = signers.split("[;,]");
-//		List<UserProfile> ret  = new ArrayList<UserProfile>(split.length);
-//		for (String s : split) {
-//			ret.add(userManager.getUserProfile(s));
-//		}
-//		return ret;
-//	}
+	private List<UserProfile> getProfiles(String signers) {
+		String[] split = signers.split("[;,]");
+		List<UserProfile> ret  = new ArrayList<UserProfile>(split.length);
+		for (String s : split) {
+			ret.add(userManager.getUserProfile(s));
+		}
+		return ret;
+	}
 
 	private Signature load(String key) {
 		return (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
