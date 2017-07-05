@@ -25,9 +25,9 @@ public class DigitalSignatureComponentImpl implements DigitalSignatureComponent
     {
         if(null != applicationProperties)
         {
-            return "myComponent:" + applicationProperties.getDisplayName();
+            return "digitalSignatureComponent:" + applicationProperties.getDisplayName();
         }
         
-        return "myComponent";
+        return "digitalSignatureComponent";
     }
 }

@@ -12,6 +12,6 @@ public class MyComponentUnitTest
     public void testMyName()
     {
         DigitalSignatureComponent component = new DigitalSignatureComponentImpl(null);
-        assertEquals("names do not match!", "myComponent",component.getName());
+        assertEquals("names do not match!", "digitalSignatureComponent",component.getName());
     }
 }

@@ -31,7 +31,15 @@
 		<category name="confluence-content" />
 		<parameters>
 			<parameter name="signers" multiple="true" type="username" required="true"/>
+			<parameter name="protectedContent" multiple="true" type="confluence-content" required="false"/>
 		</parameters>
 	</xhtml-macro>
+	
+	
+    <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">
+         <!-- /<context>/rest/signature/1.0/currentUser -->
+        <description>Provides signature services.</description>
+        <package>com.baloise.confluence.digitalsignature.rest</package>
+    </rest>
 
 </atlassian-plugin>

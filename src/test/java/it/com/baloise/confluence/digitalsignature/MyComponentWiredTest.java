@@ -23,6 +23,6 @@ public class MyComponentWiredTest
     @Test
     public void testMyName()
     {
-        assertEquals("names do not match!", "myComponent:" + applicationProperties.getDisplayName(),digitalSignatureComponent.getName());
+        assertEquals("names do not match!", "digitalSignature:" + applicationProperties.getDisplayName(),digitalSignatureComponent.getName());
     }
 }
