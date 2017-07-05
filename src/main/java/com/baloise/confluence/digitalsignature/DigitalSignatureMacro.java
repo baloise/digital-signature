@@ -34,7 +34,7 @@ public class DigitalSignatureMacro implements Macro {
 
 	@Override
 	public String execute(Map<String, String> map, String body, ConversionContext conversionContext) throws MacroExecutionException {
-		if(body != null && !body.trim().isEmpty()) {
+		if(body != null && !body.replace("&nbsp;", "").trim().isEmpty()) {
 			Signature signature = load(new Signature(conversionContext.getEntity().getLatestVersionId(), body));
 			Map<String,Object> context = defaultVelocityContext();
 			context.put("signature",  signature);
@@ -42,8 +42,8 @@ public class DigitalSignatureMacro implements Macro {
 		    String signers = map.get("signers");
 			context.put("signers",  signers);
 //			context.put("signerProfiles",  getProfiles(signers));
-		    context.put("protectedContent",  map.get("protectedContent")
-		    );
+		    context.put("protectedContent",  map.get("protectedContent"));
+		    context.put("context", context);
 		    return getRenderedTemplate("templates/macro.vm", context);
 		} 
 		return "<div class=\"aui-message aui-message-warning\">\n" + 
