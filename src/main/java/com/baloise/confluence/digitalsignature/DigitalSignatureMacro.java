@@ -3,21 +3,16 @@ package com.baloise.confluence.digitalsignature;
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
+import static com.atlassian.html.encode.HtmlEncoder.encode;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Objects.equals;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import org.apache.velocity.tools.generic.DateTool;
 import org.slf4j.Logger;
@@ -42,6 +37,8 @@ public class DigitalSignatureMacro implements Macro {
 	private UserManager userManager;
 	private  BootstrapManager bootstrapManager;
 	private static final Logger log = LoggerFactory.getLogger(DigitalSignatureMacro.class);
+	private final String REST_PATH = "/rest/signature/1.0";
+	private ContextHelper contextHelper = new ContextHelper();
 	
 	@Autowired
 	public DigitalSignatureMacro(
@@ -55,27 +52,36 @@ public class DigitalSignatureMacro implements Macro {
 	}
 
 	@Override
-	public String execute(Map<String, String> map, String body, ConversionContext conversionContext) throws MacroExecutionException {
-		log.info("body is '"+body+"'");
+	public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {
+		log.error("panel => "+params.get("panel"));
 		if(body != null && body.length() > 10) {
-			Signature signature = sync(new Signature(conversionContext.getEntity().getLatestVersionId(), body).withProtectedContent(map.get("protectedContent")));
+			Signature signature = sync(new Signature(
+					conversionContext.getEntity().getLatestVersionId(), 
+					body, 
+					params.get("title"))
+					.withNotified(getSet(params, "notified")),
+					getSet(params, "signers")
+					);
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
 			String currentUserName = currentUser.getName();
-			List<String> signers = new ArrayList<String>(asList(map.get("signers").split("[;,]")));
-			signers.removeAll(signature.getSignatures().keySet());
 			
 			Map<String,Object> context = defaultVelocityContext();
-			if(signers.contains(currentUserName)) {
-				context.put("signAs",  currentUserName);
-				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ "/rest/signature/1.0/sign");
-		    }
 			context.put("signature",  signature);
-			context.put("body",  body);
-			context.put("signers",  signers);
 			context.put("date", new DateTool());
-			context.put("profiles",  getProfiles(signers, signature.getSignatures().keySet()));
-			context.put("orderedSignatures",  getOrderedSignatures(signature));
-		    
+			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
+			Map<String, UserProfile> outstanding = contextHelper.getProfiles(userManager, signature.getOutstandingSignatures());
+			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
+			context.put("profiles",  contextHelper.union(signed, outstanding));
+			
+			if(signature.getOutstandingSignatures().contains(currentUserName)) {
+				context.put("signAs",  currentUserName);
+				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
+			}
+			context.put("panel",  getBoolean(params, "panel", true));
+			context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle()));
+			context.put("mailtoOutstanding", getMailto(outstanding.values(), signature.getTitle()));
+		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
+		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
 		    return getRenderedTemplate("templates/macro.vm", context);
 		} 
 		return "<div class=\"aui-message aui-message-warning\">\n" + 
@@ -88,49 +94,50 @@ public class DigitalSignatureMacro implements Macro {
 		
 	}
 
-	Comparator<Entry<String, Date>> comparator = new Comparator<Entry<String, Date>>() {
-		@Override
-		public int compare(Entry<String, Date> s1, Entry<String, Date> s2) {
-			int ret = s1.getValue().compareTo(s2.getValue());
-			return ret == 0 ? s1.getKey().compareTo(s2.getKey()) : ret;
+
+
+	 String getMailto(Collection<UserProfile> profiles, String subject) {
+		 if(profiles ==  null || profiles.isEmpty()) return null;
+		 StringBuilder ret = new StringBuilder("mailto:");
+		 for (UserProfile profile : profiles) {
+			if(ret.length()>7) ret.append(',');
+			ret.append(format("%s<%s>", profile.getFullName().trim(), profile.getEmail().trim()));
 		}
-	};
+		ret.append("?Subject="+encode(subject));
+		return ret.toString();
+	}
 	
-	private Object getOrderedSignatures(Signature signature) {
-		SortedSet<Entry<String, Date>> ret = new TreeSet<Map.Entry<String,Date>>(comparator);
-		ret.addAll(signature.getSignatures().entrySet());
-		return ret;
+	private Boolean getBoolean(Map<String, String> params, String key, Boolean fallback) {
+		String value = params.get(key);
+		return value == null ? fallback : Boolean.valueOf(value) ;
 	}
 
-	private Map<String, UserProfile> getProfiles(Iterable<String> ... usersNamess) {
-		Map<String, UserProfile> ret  = new HashMap<String, UserProfile>();
-		for ( Iterable<String> usersNames : usersNamess) {
-			for (String userName : usersNames) {
-				ret.put(userName, userManager.getUserProfile(userName));
-			}
-		}
-		return ret;
+	private Set<String> getSet(Map<String, String> params, String key) {
+		String value = params.get(key);
+		return value == null || value.trim().isEmpty() ? new TreeSet<String>() : new TreeSet<String>(asList(value.split("[;,]")));
 	}
-
-	private Signature sync(Signature signature) {
+	
+	private Signature sync(Signature signature, Set<String> signers) {
 		Signature loaded =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, signature.getKey());
 		if(loaded != null) {
+			signature.setSignatures(loaded.getSignatures());
 			boolean save = false;
-			if(loaded.getSignatures().isEmpty()) {
-				if(!Objects.equals(loaded.getBody(),signature.getBody())) {
-					loaded.setBody(signature.getBody());
-					save = true;
-				}
-			} else {
-				signature.setBody(loaded.getBody());
-				signature.getSignatures().putAll(loaded.getSignatures());
-			}
-			if(!Objects.equals(loaded.getProtectedContent(), signature.getProtectedContent())) {
-				loaded.setProtectedContent(signature.getProtectedContent());
+
+			if(!Objects.equals(loaded.getNotify(),signature.getNotify())) {
+				loaded.setNotify(signature.getNotify());
 				save = true;
 			}
+			
+			signers.removeAll(loaded.getSignatures().keySet());
+			signature.setOutstandingSignatures(signers);
+			if(!Objects.equals(loaded.getOutstandingSignatures(),signature.getOutstandingSignatures())) {
+				loaded.setOutstandingSignatures(signature.getOutstandingSignatures());
+				save = true;
+			}
+			
 			if(save) bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), loaded);
 		} else {
+			signature.setOutstandingSignatures(signers);
 			bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
 		}
 		return signature;

@@ -1,18 +1,38 @@
+#set( $title =  $signature.getTitle())
+#if( $panel )
 <div class="panel" style="border-width: 1px;">
-<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>Signatures</b></div>
+	#if($title)
+		<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title</b>
+		<span class="icon icon-file-pdf" style="float:right;cursor:pointer;" onclick="window.open('$downloadURL', 'document')">PDF</span>
+		#if($mailtoSigned || $mailtoOutstanding)
+				<div class="aui-buttons" style="float:right">
+					<span class="icon icon-mail aui-dropdown2-trigger" aria-haspopup="true" aria-controls="dropdown2-more" aria-expanded="false" aria-owns="area$UUID" style="float:right;">Email</span>
+					<div id="area$UUID" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true">
+				        <ul class="aui-list-truncate">
+				        	#if($mailtoSigned)
+				            <li><a href="$mailtoSigned">Already signed</a></li>
+				            #end
+				            #if($mailtoOutstanding)
+				            <li><a href="$mailtoOutstanding">Not yet signed</a></li>
+				            #end
+				        </ul>
+					</div>
+				</div>
+		#end
+		</div>
+	#end
 <div class="panelContent">
-<p>$body</p>
+#elseif($title)
+<b>$title</b>
+#end
+<p>$signature.getBody()</p>
 <ul style="list-style-type: none;">
   	#foreach ($date2userName in $orderedSignatures)
   	    #set( $userName =  $date2userName.key)
   	    #set( $profile =  $profiles.get($userName))
-	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("yyyy.MM.dd hh:ss",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
+	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("yyyy.MM.dd hh:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
 	#end
-  	<!--
-  	<li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> 2016.06.22 - Matthias Cullmann</li>
-  	<li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> 2016.11.02 - Max Veit</li>
-  	-->
-	#foreach( $signer in $signers )
+	#foreach( $signer in $signature.getOutstandingSignatures())
 		#set( $profile =  $profiles.get($signer) )
 	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
 	#end
@@ -20,6 +40,8 @@
 	 <li><form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()"><button class="aui-button" type="submit">Sign as $signAs</button></form></li> 
 	#end
 </ul>
+#if( $panel )
 </div></div>
+#end
 
 

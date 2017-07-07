@@ -36,7 +36,9 @@
 		<category name="confluence-content" />
 		<parameters>
 			<parameter name="signers" multiple="true" type="username" required="true"/>
-			<parameter name="protectedContent" multiple="true" type="confluence-content" required="false"/>
+			<parameter name="title" multiple="false" type="string" required="false"/>
+			<parameter name="notified" multiple="true" type="username" required="false"/>
+			<parameter name="panel" type="boolean" required="true" default="true" />
 		</parameters>
 	</xhtml-macro>
 	

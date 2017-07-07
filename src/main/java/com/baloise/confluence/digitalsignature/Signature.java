@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class Signature implements Serializable {
 	
@@ -13,15 +15,18 @@ public class Signature implements Serializable {
 	
 	private String key = "";
 	private long pageId;
+	private String title = "";
 	private String body = "";
-	private String protectedContent = "";
 	private Map<String, Date> signatures = new HashMap<String, Date>();
-
+	private Set<String> outstandingSignatures = new TreeSet<String>();
+	private Set<String> notified = new TreeSet<String>();
+	
 	public Signature() {}
-	public Signature(long pageId, String body) {
+	public Signature(long pageId, String body,String title) {
 		this.pageId = pageId;
 		this.body = body;
-		key = "signature."+sha256Hex(pageId +":" + body);
+		this.title = title == null ? "" : title;
+		key = "signature."+sha256Hex(pageId +":"+ title +":" + body);
 	}
 	public String getKey() {
 		return key;
@@ -47,13 +52,26 @@ public class Signature implements Serializable {
 	public void setSignatures(Map<String, Date> signatures) {
 		this.signatures = signatures;
 	}
-	public String getProtectedContent() {
-		return protectedContent;
+	public Set<String> getOutstandingSignatures() {
+		return outstandingSignatures;
 	}
-	public void setProtectedContent(String protectedContent) {
-		this.protectedContent = protectedContent;
+	public void setOutstandingSignatures(Set<String> outstandingSignatures) {
+		this.outstandingSignatures = outstandingSignatures;
 	}
 	
+	
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	public Set<String> getNotify() {
+		return notified;
+	}
+	public void setNotify(Set<String> notify) {
+		this.notified = notify;
+	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -78,8 +96,10 @@ public class Signature implements Serializable {
 			return false;
 		return true;
 	}
-	public Signature withProtectedContent(String protectedContent) {
-		setProtectedContent(protectedContent);
+	
+	public Signature withNotified(Set<String> notified) {
+		this.notified = notified;
 		return this;
 	}
+	
 }

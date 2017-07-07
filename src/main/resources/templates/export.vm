@@ -1,0 +1,40 @@
+#disableAntiXSS()
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>$signature.getTitle()</title>
+<style type="text/css">
+body {
+padding: 2% 4% 2% 4%;
+}
+td {
+padding-right: 12px;	
+}
+</style>
+</head>
+<body>
+<h1>$signature.getTitle()</h1>
+<p>$signature.getBody()</p>
+<table>
+#foreach ($date2userName in $orderedSignatures)
+  	#set( $userName =  $date2userName.key)
+  	#set( $profile =  $profiles.get($userName))
+	<tr>
+		<td>$date.format("yyyy.MM.dd hh:ss",$date2userName.value)</td>
+		<td>$profile.getFullName()</td>
+		<td>$profile.getEmail()</td>
+	</tr>
+#end
+#foreach( $signer in $signature.getOutstandingSignatures())
+	#set( $profile =  $profiles.get($signer) )
+	 <tr>
+		<td></td>
+		<td>$profile.getFullName()</td>
+		<td>$profile.getEmail()</td>
+	</tr>
+#end
+</table>
+<!-- generated $date.format("yyyy.MM.dd hh:mm",$currentDate) -->
+</body>
+</html>
