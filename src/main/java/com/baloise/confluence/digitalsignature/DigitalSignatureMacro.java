@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.velocity.tools.generic.DateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("signature",  signature);
 			context.put("body",  body);
 			context.put("signers",  signers);
+			context.put("date", new DateTool());
 			context.put("profiles",  getProfiles(signers, signature.getSignatures().keySet()));
 		    
 		    return getRenderedTemplate("templates/macro.vm", context);
