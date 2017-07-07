@@ -3,7 +3,7 @@
 <div class="panelContent">
 <p>$body</p>
 <ul style="list-style-type: none;">
-  	#foreach ($date2userName in $signature.getSignatures().entrySet())
+  	#foreach ($date2userName in $orderedSignatures)
   	    #set( $userName =  $date2userName.key)
   	    #set( $profile =  $profiles.get($userName))
 	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("yyyy.MM.dd hh:ss",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>

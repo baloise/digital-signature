@@ -7,10 +7,17 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.equals;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.velocity.tools.generic.DateTool;
 import org.slf4j.Logger;
@@ -67,6 +74,7 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("signers",  signers);
 			context.put("date", new DateTool());
 			context.put("profiles",  getProfiles(signers, signature.getSignatures().keySet()));
+			context.put("orderedSignatures",  getOrderedSignatures(signature));
 		    
 		    return getRenderedTemplate("templates/macro.vm", context);
 		} 
@@ -78,6 +86,20 @@ public class DigitalSignatureMacro implements Macro {
 				"</div>";
 		
 		
+	}
+
+	Comparator<Entry<String, Date>> comparator = new Comparator<Entry<String, Date>>() {
+		@Override
+		public int compare(Entry<String, Date> s1, Entry<String, Date> s2) {
+			int ret = s1.getValue().compareTo(s2.getValue());
+			return ret == 0 ? s1.getKey().compareTo(s2.getKey()) : ret;
+		}
+	};
+	
+	private Object getOrderedSignatures(Signature signature) {
+		SortedSet<Entry<String, Date>> ret = new TreeSet<Map.Entry<String,Date>>(comparator);
+		ret.addAll(signature.getSignatures().entrySet());
+		return ret;
 	}
 
 	private Map<String, UserProfile> getProfiles(Iterable<String> ... usersNamess) {
