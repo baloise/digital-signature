@@ -1,6 +1,6 @@
 package com.baloise.confluence.digitalsignature;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha512Hex;
+import static org.apache.commons.codec.digest.DigestUtils.*;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -11,16 +11,17 @@ public class Signature implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private String key;
+	private String key = "";
 	private long pageId;
-	private String body;
+	private String body = "";
+	private String protectedContent = "";
 	private Map<String, Date> signatures = new HashMap<String, Date>();
 
 	public Signature() {}
 	public Signature(long pageId, String body) {
 		this.pageId = pageId;
 		this.body = body;
-		key = "com.baloise.confluence.digitalsignature.Signature."+sha512Hex(pageId +":" + body);
+		key = "signature."+sha256Hex(pageId +":" + body);
 	}
 	public String getKey() {
 		return key;
@@ -45,6 +46,12 @@ public class Signature implements Serializable {
 	}
 	public void setSignatures(Map<String, Date> signatures) {
 		this.signatures = signatures;
+	}
+	public String getProtectedContent() {
+		return protectedContent;
+	}
+	public void setProtectedContent(String protectedContent) {
+		this.protectedContent = protectedContent;
 	}
 	
 	@Override
@@ -71,9 +78,8 @@ public class Signature implements Serializable {
 			return false;
 		return true;
 	}
-	
-	
-	
-	
-
+	public Signature withProtectedContent(String protectedContent) {
+		setProtectedContent(protectedContent);
+		return this;
+	}
 }

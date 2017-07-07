@@ -1,13 +1,23 @@
-<p>
-$body
-</p>
-<pre>
-$body
-</pre>
-$signers <br/>
-$protectedContent <br/>
-<pre>
-#foreach( $key in $context.keys )
-    $key = $context.get($key) 
-#end
-</pre>
+<div class="panel" style="border-width: 1px;">
+<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>Signatures</b></div>
+<div class="panelContent">
+<p>$body</p>
+<ul style="list-style-type: none;">
+  	#foreach ($date2userName in $signature.getSignatures())
+	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date2userName.key - $profiles.get($date2userName.value).getFullName()</li>
+	#end
+  	<!--
+  	<li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> 2016.06.22 - Matthias Cullmann</li>
+  	<li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> 2016.11.02 - Max Veit</li>
+  	-->
+	#foreach( $signer in $signers )
+		#set( $profile =  $profiles.get($signer) )
+	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
+	#end
+	#if($signAs)
+	 <li><form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()"><button class="aui-button" type="submit">Sign as $signAs</button></form></li> 
+	#end
+</ul>
+</div></div>
+
+
