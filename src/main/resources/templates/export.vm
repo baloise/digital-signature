@@ -1,9 +1,4 @@
 #disableAntiXSS()
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="ISO-8859-1">
-<title>$signature.getTitle()</title>
 <style type="text/css">
 body {
 padding: 2% 4% 2% 4%;
@@ -12,8 +7,6 @@ td {
 padding-right: 12px;	
 }
 </style>
-</head>
-<body>
 <h1>$signature.getTitle()</h1>
 <p>$signature.getBody()</p>
 <table>
@@ -36,5 +29,3 @@ padding-right: 12px;
 #end
 </table>
 <!-- generated $date.format("yyyy.MM.dd hh:mm",$currentDate) -->
-</body>
-</html>
