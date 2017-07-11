@@ -178,10 +178,6 @@
 			<id>atlassian-public</id>
 			<url>https://maven.atlassian.com/repository/public</url>
 		</repository>
-		<!-- <repository> <releases> <enabled>true</enabled> <checksumPolicy>warn</checksumPolicy> 
-			</releases> <snapshots> <enabled>false</enabled> <updatePolicy>never</updatePolicy> 
-			<checksumPolicy>warn</checksumPolicy> </snapshots> <id>baloise-sun-m2</id> 
-			<url>http://baloise.github.io/sun-m2</url> </repository> -->
 	</repositories>
 
 	<pluginRepositories>
