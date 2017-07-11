@@ -207,14 +207,15 @@
 						<artifactId>site-maven-plugin</artifactId>
 						<version>0.12</version>
 						<configuration>
+							<merge>true</merge>
 							<repositoryOwner>baloise</repositoryOwner>
 							<repositoryName>${project.artifactId}</repositoryName>
 							<message>Releasing ${project.version}</message>
 							<path>updatesite</path>
 							<includes>
 								<include>${project.build.finalName}.jar</include>
+								<include>${project.build.finalName}.obr</include>
 							</includes>
-							<dryRun>true</dryRun>
 							<outputDirectory>target</outputDirectory>
 							<oauth2Token>${env.github_oauth2Token}</oauth2Token>
 						</configuration>
