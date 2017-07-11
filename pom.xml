@@ -12,6 +12,10 @@
 		<name>Baloise</name>
 		<url>http://www.baloise.ch/</url>
 	</organization>
+	<issueManagement>
+		<system>Github</system>
+		<url>https://github.com/baloise/digital-signature/issues</url>
+	</issueManagement>
 
 	<name>digital-signature</name>
 	<description>This is the com.baloise.confluence:digital-signature plugin for Atlassian Confluence.</description>
@@ -211,7 +215,7 @@
 							<repositoryOwner>baloise</repositoryOwner>
 							<repositoryName>${project.artifactId}</repositoryName>
 							<message>Releasing ${project.version}</message>
-							<path>updatesite</path>
+							<path>dist</path>
 							<includes>
 								<include>${project.build.finalName}.jar</include>
 								<include>${project.build.finalName}.obr</include>
