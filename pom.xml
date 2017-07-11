@@ -16,6 +16,11 @@
 		<system>Github</system>
 		<url>https://github.com/baloise/digital-signature/issues</url>
 	</issueManagement>
+	<scm>
+		<connection>scm:git:https://github.com/baloise/digital-signature.git</connection>
+		<developerConnection>scm:git:https://github.com/baloise/digital-signature.git</developerConnection>
+		<url>https://github.com/baloise/digital-signature.git</url>
+	</scm>
 
 	<name>digital-signature</name>
 	<description>This is the com.baloise.confluence:digital-signature plugin for Atlassian Confluence.</description>
