@@ -30,7 +30,7 @@
   	#foreach ($date2userName in $orderedSignatures)
   	    #set( $userName =  $date2userName.key)
   	    #set( $profile =  $profiles.get($userName))
-	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("yyyy.MM.dd hh:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
+	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("dd.MM.yyyy HH:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
 	#end
 	#foreach( $signer in $signature.getOutstandingSignatures())
 		#set( $profile =  $profiles.get($signer) )
