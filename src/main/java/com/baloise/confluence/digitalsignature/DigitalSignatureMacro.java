@@ -109,7 +109,7 @@ public class DigitalSignatureMacro implements Macro {
 			users.removeAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
 			break;
 		case WRITERS_ONLY:
-			users.removeAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+			users.addAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
 			break;
 		case NONE:
 			break;
