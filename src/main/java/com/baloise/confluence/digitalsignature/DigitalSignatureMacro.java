@@ -8,6 +8,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -15,14 +16,14 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.apache.velocity.tools.generic.DateTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
+import com.atlassian.confluence.security.ContentPermission;
+import com.atlassian.confluence.security.ContentPermissionSet;
 import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
@@ -36,7 +37,6 @@ public class DigitalSignatureMacro implements Macro {
 	private BandanaManager bandanaManager;
 	private UserManager userManager;
 	private  BootstrapManager bootstrapManager;
-	private static final Logger log = LoggerFactory.getLogger(DigitalSignatureMacro.class);
 	private final String REST_PATH = "/rest/signature/1.0";
 	private ContextHelper contextHelper = new ContextHelper();
 	
@@ -53,14 +53,17 @@ public class DigitalSignatureMacro implements Macro {
 
 	@Override
 	public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {
-		log.error("panel => "+params.get("panel"));
 		if(body != null && body.length() > 10) {
+			Set<String> signers = contextHelper.union(
+					getSet(params, "signers"), 
+					loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
+					);
 			Signature signature = sync(new Signature(
 					conversionContext.getEntity().getLatestVersionId(), 
 					body, 
 					params.get("title"))
 					.withNotified(getSet(params, "notified")),
-					getSet(params, "signers")
+					signers
 					);
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
 			String currentUserName = currentUser.getName();
@@ -74,7 +77,7 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("profiles",  contextHelper.union(signed, outstanding));
 			
 			if(signature.getOutstandingSignatures().contains(currentUserName)) {
-				context.put("signAs",  currentUserName);
+				context.put("signAs",  outstanding.get(currentUserName).getFullName());
 				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
 			}
 			context.put("panel",  getBoolean(params, "panel", true));
@@ -92,6 +95,37 @@ public class DigitalSignatureMacro implements Macro {
 				"</div>";
 		
 		
+	}
+
+	private Set<String> loadInheritedSigners(InheritSigners inheritSigners, ConversionContext conversionContext) {
+		Set<String> users = new HashSet<String>();
+		switch (inheritSigners) {
+		case READERS_AND_WRITERS:
+			users.addAll(loadUsers(conversionContext, ContentPermission.VIEW_PERMISSION));
+			users.addAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+			break;
+		case READERS_ONLY:
+			users.addAll(loadUsers(conversionContext, ContentPermission.VIEW_PERMISSION));
+			users.removeAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+			break;
+		case WRITERS_ONLY:
+			users.removeAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+			break;
+		case NONE:
+			break;
+		}
+		return users;
+	}
+
+	private Set<String> loadUsers(ConversionContext conversionContext, String permission) {
+		Set<String> users = new HashSet<String>();
+		ContentPermissionSet contentPermissionSet = conversionContext.getEntity().getContentPermissionSet(permission);
+		if(contentPermissionSet != null) {
+			  for (ContentPermission cp : contentPermissionSet) {
+				  users.add(cp.getUserSubject().getName());
+	            }
+		}
+		return users;
 	}
 
 
@@ -116,7 +150,7 @@ public class DigitalSignatureMacro implements Macro {
 		String value = params.get(key);
 		return value == null || value.trim().isEmpty() ? new TreeSet<String>() : new TreeSet<String>(asList(value.split("[;,]")));
 	}
-	
+
 	private Signature sync(Signature signature, Set<String> signers) {
 		Signature loaded =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, signature.getKey());
 		if(loaded != null) {

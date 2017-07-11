@@ -39,5 +39,10 @@ public class TemplatesTest {
 		String result = sw.toString();
 		System.out.println(result);
 	}
+	
+	@Test
+	public void foo() {
+		System.out.println("https://test-confluence.baloisenet.com/atlassian/rest/signature/1.0/".split("rest/")[0]);
+	}
 
 }

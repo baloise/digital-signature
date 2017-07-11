@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.baloise.confluence</groupId>
 	<artifactId>digital-signature</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>0.9.0</version>
 
 	<organization>
 		<name>Baloise</name>
@@ -28,6 +28,13 @@
 			<groupId>com.atlassian.confluence</groupId>
 			<artifactId>confluence</artifactId>
 			<version>${confluence.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.atlassian.mywork</groupId>
+			<artifactId>mywork-api</artifactId>
+			<version>1.0.2</version>
 			<scope>provided</scope>
 		</dependency>
 

@@ -15,6 +15,8 @@
  	<component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" />
  	<component-import key="bootstrapManager" interface="com.atlassian.confluence.setup.BootstrapManager" />
 	<component-import key="settingsManager" interface="com.atlassian.confluence.setup.settings.SettingsManager" />
+	<component-import key="notificationService" interface="com.atlassian.mywork.service.LocalNotificationService"/>
+	<component-import key="mailServerManager" interface="com.atlassian.mail.server.MailServerManager"/>
 	
 	<!-- add our web resources -->
 	<web-resource key="digital-signature-resources" name="digital-signature Web Resources">
@@ -35,7 +37,13 @@
 		<description>sign off / approval</description>
 		<category name="confluence-content" />
 		<parameters>
-			<parameter name="signers" multiple="true" type="username" required="true"/>
+			<parameter name="signers" multiple="true" type="username" required="false"/>
+			<parameter name="inheritSigners" multiple="false" type="enum" required="true" default="none">
+				<value name="none"/>
+				<value name="readers only"/>
+				<value name="writers only"/>
+				<value name="readers and writers"/>
+			</parameter>
 			<parameter name="title" multiple="false" type="string" required="false"/>
 			<parameter name="notified" multiple="true" type="username" required="false"/>
 			<parameter name="panel" type="boolean" required="true" default="true" />
