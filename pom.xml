@@ -155,4 +155,81 @@
 		<atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 	</properties>
 
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+			<id>atlassian-public</id>
+			<url>https://maven.atlassian.com/repository/public</url>
+		</repository>
+		<!-- <repository> <releases> <enabled>true</enabled> <checksumPolicy>warn</checksumPolicy> 
+			</releases> <snapshots> <enabled>false</enabled> <updatePolicy>never</updatePolicy> 
+			<checksumPolicy>warn</checksumPolicy> </snapshots> <id>baloise-sun-m2</id> 
+			<url>http://baloise.github.io/sun-m2</url> </repository> -->
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+			<id>atlassian-public</id>
+			<url>https://maven.atlassian.com/repository/public</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<profiles>
+		<profile>
+			<id>travis</id>
+			<activation>
+				<property>
+					<name>TRAVIS</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.github.github</groupId>
+						<artifactId>site-maven-plugin</artifactId>
+						<version>0.12</version>
+						<configuration>
+							<repositoryOwner>baloise</repositoryOwner>
+							<repositoryName>${project.artifactId}</repositoryName>
+							<message>Releasing ${project.version}</message>
+							<path>updatesite</path>
+							<includes>
+								<include>${project.build.finalName}.jar</include>
+							</includes>
+							<dryRun>true</dryRun>
+							<outputDirectory>target</outputDirectory>
+							<oauth2Token>${env.github_oauth2Token}</oauth2Token>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>site</goal>
+								</goals>
+								<phase>package</phase>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>
