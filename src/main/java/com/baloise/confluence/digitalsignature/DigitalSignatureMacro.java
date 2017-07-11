@@ -91,7 +91,7 @@ public class DigitalSignatureMacro implements Macro {
 				"    <p class=\"title\">\n" + 
 				"        <strong>Signature Macro</strong>\n" + 
 				"    </p>\n" + 
-				"    <p>You need to enter a text to be signed.</p>\n" + 
+				"    <p>You need to enter at least 10 characters of text to be signed.</p>\n" + 
 				"</div>";
 		
 		
