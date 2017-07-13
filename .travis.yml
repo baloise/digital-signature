@@ -1,7 +1,4 @@
 language: java
 jdk:
   - oraclejdk8
-script: mvn package -P travis
-branches:
-  only:
-    - release
+script: mvn package
