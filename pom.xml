@@ -198,11 +198,11 @@
 
 	<profiles>
 		<profile>
-			<id>travis</id>
+			<id>travis-release</id>echo %tr
 			<activation>
 				<property>
-					<name>TRAVIS</name>
-					<value>true</value>
+					<name>env.TRAVIS_BRANCH</name>
+					<value>release</value>
 				</property>
 			</activation>
 			<build>
