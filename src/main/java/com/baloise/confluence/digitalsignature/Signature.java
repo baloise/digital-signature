@@ -18,7 +18,7 @@ public class Signature implements Serializable {
 	private String title = "";
 	private String body = "";
 	private Map<String, Date> signatures = new HashMap<String, Date>();
-	private Set<String> outstandingSignatures = new TreeSet<String>();
+	private Set<String> missingSignatures = new TreeSet<String>();
 	private Set<String> notified = new TreeSet<String>();
 	
 	public Signature() {}
@@ -52,11 +52,11 @@ public class Signature implements Serializable {
 	public void setSignatures(Map<String, Date> signatures) {
 		this.signatures = signatures;
 	}
-	public Set<String> getOutstandingSignatures() {
-		return outstandingSignatures;
+	public Set<String> getMissingSignatures() {
+		return missingSignatures;
 	}
-	public void setOutstandingSignatures(Set<String> outstandingSignatures) {
-		this.outstandingSignatures = outstandingSignatures;
+	public void setMissingSignatures(Set<String> missingSignatures) {
+		this.missingSignatures = missingSignatures;
 	}
 	
 	

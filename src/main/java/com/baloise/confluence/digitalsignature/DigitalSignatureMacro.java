@@ -72,17 +72,17 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("signature",  signature);
 			context.put("date", new DateTool());
 			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
-			Map<String, UserProfile> outstanding = contextHelper.getProfiles(userManager, signature.getOutstandingSignatures());
+			Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
 			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
-			context.put("profiles",  contextHelper.union(signed, outstanding));
+			context.put("profiles",  contextHelper.union(signed, missing));
 			
-			if(signature.getOutstandingSignatures().contains(currentUserName)) {
-				context.put("signAs",  outstanding.get(currentUserName).getFullName());
+			if(signature.getMissingSignatures().contains(currentUserName)) {
+				context.put("signAs",  missing.get(currentUserName).getFullName());
 				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
 			}
 			context.put("panel",  getBoolean(params, "panel", true));
 			context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle()));
-			context.put("mailtoOutstanding", getMailto(outstanding.values(), signature.getTitle()));
+			context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle()));
 		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
 		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
 		    return getRenderedTemplate("templates/macro.vm", context);
@@ -163,22 +163,22 @@ public class DigitalSignatureMacro implements Macro {
 			}
 			
 			signers.removeAll(loaded.getSignatures().keySet());
-			signature.setOutstandingSignatures(signers);
-			if(!Objects.equals(loaded.getOutstandingSignatures(),signature.getOutstandingSignatures())) {
-				loaded.setOutstandingSignatures(signature.getOutstandingSignatures());
+			signature.setMissingSignatures(signers);
+			if(!Objects.equals(loaded.getMissingSignatures(),signature.getMissingSignatures())) {
+				loaded.setMissingSignatures(signature.getMissingSignatures());
 				save = true;
 			}
 			
 			if(save) save(loaded);
 		} else {
-			signature.setOutstandingSignatures(signers);
+			signature.setMissingSignatures(signers);
 			save(signature);
 		}
 		return signature;
 	}
 
 	private void save(Signature signature) {
-		if(!signature.getOutstandingSignatures().isEmpty())
+		if(!signature.getMissingSignatures().isEmpty())
 			bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
 	}
 

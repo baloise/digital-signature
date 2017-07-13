@@ -76,7 +76,7 @@ public class DigitalSigatureService {
 	public Response sign(@QueryParam("key") final String key, @Context UriInfo uriInfo) {
 		String userName = AuthenticatedUserThreadLocal.get().getName();
 		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
-		if(!signature.getOutstandingSignatures().remove(userName)) {
+		if(!signature.getMissingSignatures().remove(userName)) {
 			 status(Response.Status.BAD_REQUEST)
             .entity(userName +" is not expected to sign document "+ key)
             .type( MediaType.TEXT_PLAIN)
@@ -143,9 +143,9 @@ public class DigitalSigatureService {
 		context.put("signature",  signature);
 		context.put("date", new DateTool());
 		Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
-		Map<String, UserProfile> outstanding = contextHelper.getProfiles(userManager, signature.getOutstandingSignatures());
+		Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
 		context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
-		context.put("profiles",  contextHelper.union(signed, outstanding));
+		context.put("profiles",  contextHelper.union(signed, missing));
 		
 		context.put("currentDate", new Date());
 		
