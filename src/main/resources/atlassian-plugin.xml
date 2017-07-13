@@ -10,6 +10,7 @@
 
 	<!-- add our i18n resource -->
 	<resource type="i18n" name="i18n" location="digital-signature" />
+	<resource type="download" name="images/" location="/images"/>
 
 	<component-import key="bandanaManager"  interface="com.atlassian.bandana.BandanaManager"/>
  	<component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" />
@@ -27,13 +28,16 @@
 		<resource type="download" name="digital-signature.js"
 			location="/js/digital-signature.js" />
 		<resource type="download" name="images/" location="/images" />
-
 		<context>digital-signature</context>
 	</web-resource>
 
+ 
+
 	<xhtml-macro name="signature"
 		class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro"
-		key='digital-signature'>
+		key="digital-signature"
+		icon="/download/resources/${project.groupId}.${project.artifactId}/images/macro-icon.png"
+		>
 		<description>sign off / approval</description>
 		<category name="confluence-content" />
 		<parameters>
