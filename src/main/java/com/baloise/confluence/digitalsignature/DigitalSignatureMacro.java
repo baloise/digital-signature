@@ -169,12 +169,17 @@ public class DigitalSignatureMacro implements Macro {
 				save = true;
 			}
 			
-			if(save) bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), loaded);
+			if(save) save(loaded);
 		} else {
 			signature.setOutstandingSignatures(signers);
-			bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
+			save(signature);
 		}
 		return signature;
+	}
+
+	private void save(Signature signature) {
+		if(!signature.getOutstandingSignatures().isEmpty())
+			bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
 	}
 
 	@Override
