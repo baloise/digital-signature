@@ -4,7 +4,7 @@
 	#if($title)
 		<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title</b>
 		<span class="icon icon-file-pdf" style="float:right;cursor:pointer;" onclick="window.open('$downloadURL', 'document')" title="Export document">PDF</span>
-		#if($mailtoSigned || $mailtoOutstanding)
+		#if($mailtoSigned || $mailtoMissing)
 				<div class="aui-buttons" style="float:right">
 					<span class="icon icon-mail aui-dropdown2-trigger" aria-haspopup="true" aria-controls="dropdown2-more" aria-expanded="false" aria-owns="area$UUID" style="float:right;" title="Send email">Email</span>
 					<div id="area$UUID" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true">
@@ -12,8 +12,8 @@
 				        	#if($mailtoSigned)
 				            <li><a href="$mailtoSigned">Already signed</a></li>
 				            #end
-				            #if($mailtoOutstanding)
-				            <li><a href="$mailtoOutstanding">Not yet signed</a></li>
+				            #if($mailtoMissing)
+				            <li><a href="$mailtoMissing">Not yet signed</a></li>
 				            #end
 				        </ul>
 					</div>
@@ -32,7 +32,7 @@
   	    #set( $profile =  $profiles.get($userName))
 	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("dd.MM.yyyy HH:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
 	#end
-	#foreach( $signer in $signature.getOutstandingSignatures())
+	#foreach( $signer in $signature.getMissingSignatures())
 		#set( $profile =  $profiles.get($signer) )
 	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
 	#end
