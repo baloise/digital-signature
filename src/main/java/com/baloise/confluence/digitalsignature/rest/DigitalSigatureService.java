@@ -42,7 +42,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.baloise.confluence.digitalsignature.ContextHelper;
-import com.baloise.confluence.digitalsignature.Markdown;
 import com.baloise.confluence.digitalsignature.Signature;
 
 @Path("/")
@@ -57,7 +56,6 @@ public class DigitalSigatureService {
 	private final LocalNotificationService notificationService;
 	private final MailServerManager mailServerManager;
 	private final ContextHelper contextHelper = new ContextHelper();
-	private final transient Markdown markdown = new Markdown();
 	 
    public DigitalSigatureService(
 		   @ComponentImport BandanaManager bandanaManager, 
@@ -144,7 +142,6 @@ public class DigitalSigatureService {
 		Map<String,Object> context = defaultVelocityContext();
 		context.put("signature",  signature);
 		context.put("date", new DateTool());
-		context.put("markdown", markdown);
 		Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
 		Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
 		context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
