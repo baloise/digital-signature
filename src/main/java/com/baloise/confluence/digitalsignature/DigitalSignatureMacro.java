@@ -39,6 +39,7 @@ public class DigitalSignatureMacro implements Macro {
 	private  BootstrapManager bootstrapManager;
 	private final String REST_PATH = "/rest/signature/1.0";
 	private ContextHelper contextHelper = new ContextHelper();
+	private final transient Markdown markdown = new Markdown();
 	
 	@Autowired
 	public DigitalSignatureMacro(
@@ -71,6 +72,7 @@ public class DigitalSignatureMacro implements Macro {
 			Map<String,Object> context = defaultVelocityContext();
 			context.put("signature",  signature);
 			context.put("date", new DateTool());
+			context.put("markdown", markdown);
 			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
 			Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
 			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));

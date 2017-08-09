@@ -25,7 +25,8 @@
 #elseif($title)
 <b>$title</b>
 #end
-<p>$signature.getBody()</p>
+#set($bodyWithHtml = $markdown.toHTML($signature.getBody()))
+<p>$bodyWithHtml</p>
 <ul style="list-style-type: none;">
   	#foreach ($date2userName in $orderedSignatures)
   	    #set( $userName =  $date2userName.key)

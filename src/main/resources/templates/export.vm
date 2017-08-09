@@ -7,7 +7,8 @@ padding-right: 12px;
 }
 </style>
 <h1>$signature.getTitle()</h1>
-<p>$signature.getBody()</p>
+#set($bodyWithHtml = $markdown.toHTML($signature.getBody()))
+<p>$bodyWithHtml</p>
 <table>
 #foreach ($date2userName in $orderedSignatures)
   	#set( $userName =  $date2userName.key)
