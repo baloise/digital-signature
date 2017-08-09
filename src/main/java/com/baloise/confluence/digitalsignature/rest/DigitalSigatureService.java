@@ -120,6 +120,8 @@ public class DigitalSigatureService {
 			
 			if(mailServer== null) {
 				log.warn("No default SMTP server found -> no signature notification sent.");
+			} else if(userProfile.getEmail() == null && userProfile.getEmail().trim().isEmpty()) {
+				log.warn(userProfile.getUsername()+" is to be notified but has no email address. Skipping email notification");
 			} else {
 				mailServer.send(
 						new Email(userProfile.getEmail())
@@ -128,7 +130,8 @@ public class DigitalSigatureService {
 						.setMimeType("text/html")
 						);
 			}
-	    
+		} catch (IllegalArgumentException e) {
+			log.error("Could not send notification to "+userName, e);
 		} catch (InterruptedException e) {
 			log.error("Could not send notification to "+userName, e);
 		} catch (MailException e) {
