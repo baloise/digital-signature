@@ -118,12 +118,16 @@ public class DigitalSigatureService {
 			
 			SMTPMailServer  mailServer = mailServerManager.getDefaultSMTPMailServer();  
 			
-			mailServer.send(
-					new Email(userProfile.getEmail())
-					.setSubject(titleText)
-					.setBody(html)
-					.setMimeType("text/html")
-					);
+			if(mailServer== null) {
+				log.warn("No default SMTP server found -> no signature notification sent.");
+			} else {
+				mailServer.send(
+						new Email(userProfile.getEmail())
+						.setSubject(titleText)
+						.setBody(html)
+						.setMimeType("text/html")
+						);
+			}
 	    
 		} catch (InterruptedException e) {
 			log.error("Could not send notification to "+userName, e);
