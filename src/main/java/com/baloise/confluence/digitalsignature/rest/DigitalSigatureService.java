@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
+import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.velocity.htmlsafe.HtmlSafe;
 import com.atlassian.mail.Email;
 import com.atlassian.mail.MailException;
@@ -76,7 +77,8 @@ public class DigitalSigatureService {
 	@GET
 	@Path("sign")
 	public Response sign(@QueryParam("key") final String key, @Context UriInfo uriInfo) {
-		String userName = AuthenticatedUserThreadLocal.get().getName();
+		ConfluenceUser confluenceUser = AuthenticatedUserThreadLocal.get();
+		String userName = confluenceUser.getName();
 		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
 		if(!signature.getMissingSignatures().remove(userName)) {
 			 status(Response.Status.BAD_REQUEST)
@@ -89,26 +91,24 @@ public class DigitalSigatureService {
 		
 		String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
 		for(String notifiedUser : signature.getNotify()) {
-				notify(notifiedUser, signature, baseUrl);
+				notify(notifiedUser,confluenceUser, signature, baseUrl);
 		}
 		
 		URI pageUri = create(settingsManager.getGlobalSettings().getBaseUrl()+ "/pages/viewpage.action?pageId="+signature.getPageId());
 		return temporaryRedirect(pageUri).build();
 	}
 	
-	
-
-	private void notify(final String userName, final Signature signature, final String baseUrl) {
+	private void notify(final String notifiedUser, ConfluenceUser signedUser, final Signature signature, final String baseUrl) {
 		try {
-			UserProfile userProfile = userManager.getUserProfile(userName);
+			UserProfile notifiedUserProfile = userManager.getUserProfile(notifiedUser);
 			String html = format("<a href='%s'>%s</a> signed <a href='%s'>%s</a>",
-									baseUrl+ "/display/~"+userName,
-									userProfile.getFullName(),
+									baseUrl+ "/display/~"+signedUser.getName(),
+									signedUser.getFullName(),
 									baseUrl+"/pages/viewpage.action?pageId="+signature.getPageId(),
 									signature.getTitle()
 									);
-			String titleText = userProfile.getFullName()+" signed "+signature.getTitle();
-			notificationService.createOrUpdate(userName, new NotificationBuilder()
+			String titleText = signedUser.getFullName()+" signed "+signature.getTitle();
+			notificationService.createOrUpdate(notifiedUser, new NotificationBuilder()
 		            .application(PLUGIN_KEY) // a unique key that identifies your plugin
 		            .title(titleText)
 		            .itemTitle(titleText)
@@ -120,27 +120,28 @@ public class DigitalSigatureService {
 			
 			if(mailServer== null) {
 				log.warn("No default SMTP server found -> no signature notification sent.");
-			} else if(userProfile.getEmail() == null && userProfile.getEmail().trim().isEmpty()) {
-				log.warn(userProfile.getUsername()+" is to be notified but has no email address. Skipping email notification");
+			} else if(notifiedUserProfile.getEmail() == null && notifiedUserProfile.getEmail().trim().isEmpty()) {
+				log.warn(notifiedUserProfile.getUsername()+" is to be notified but has no email address. Skipping email notification");
 			} else {
 				mailServer.send(
-						new Email(userProfile.getEmail())
+						new Email(notifiedUserProfile.getEmail())
 						.setSubject(titleText)
 						.setBody(html)
 						.setMimeType("text/html")
 						);
 			}
 		} catch (IllegalArgumentException e) {
-			log.error("Could not send notification to "+userName, e);
+			log.error("Could not send notification to "+notifiedUser, e);
 		} catch (InterruptedException e) {
-			log.error("Could not send notification to "+userName, e);
+			log.error("Could not send notification to "+notifiedUser, e);
 		} catch (MailException e) {
-			log.error("Could not send notification to "+userName, e);
+			log.error("Could not send notification to "+notifiedUser, e);
 		} catch (ExecutionException e) {
-			log.error("Could not send notification to "+userName, e);
+			log.error("Could not send notification to "+notifiedUser, e);
 		}
 	}
 
+	
 	@GET
 	@Path("export")
 	@Produces({"text/html"})
