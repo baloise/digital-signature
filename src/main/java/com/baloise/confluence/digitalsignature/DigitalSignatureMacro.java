@@ -34,6 +34,7 @@ import com.atlassian.sal.api.user.UserProfile;
 
 @Scanned
 public class DigitalSignatureMacro implements Macro {
+	private final int MAX_MAILTO_CHARACTER_COUNT = 500;
 	private BandanaManager bandanaManager;
 	private UserManager userManager;
 	private  BootstrapManager bootstrapManager;
@@ -130,17 +131,24 @@ public class DigitalSignatureMacro implements Macro {
 		return users;
 	}
 
-
-
 	 String getMailto(Collection<UserProfile> profiles, String subject) {
 		 if(profiles ==  null || profiles.isEmpty()) return null;
 		 StringBuilder ret = new StringBuilder("mailto:");
 		 for (UserProfile profile : profiles) {
 			if(ret.length()>7) ret.append(',');
 			ret.append(format("%s<%s>", profile.getFullName().trim(), profile.getEmail().trim()));
-		}
-		ret.append("?Subject="+encode(subject));
-		return ret.toString();
+		 }
+		 ret.append("?Subject="+encode(subject));
+		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
+			ret.setLength(0);
+			ret.append("mailto:");
+			for (UserProfile profile : profiles) {
+				if(ret.length()>7) ret.append(',');
+				ret.append(profile.getEmail().trim());
+			 }
+			 ret.append("?Subject="+encode(subject));
+		 }
+		 return ret.toString();
 	}
 	
 	private Boolean getBoolean(Map<String, String> params, String key, Boolean fallback) {
