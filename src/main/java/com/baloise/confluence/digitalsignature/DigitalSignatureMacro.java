@@ -77,6 +77,7 @@ public class DigitalSignatureMacro implements Macro {
 			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
 			Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
 			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
+			context.put("orderedMissingSignatureProfiles",  contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
 			context.put("profiles",  contextHelper.union(signed, missing));
 			
 			if(signature.getMissingSignatures().contains(currentUserName)) {

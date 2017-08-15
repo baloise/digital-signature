@@ -33,8 +33,7 @@
   	    #set( $profile =  $profiles.get($userName))
 	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("dd.MM.yyyy HH:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
 	#end
-	#foreach( $signer in $signature.getMissingSignatures())
-		#set( $profile =  $profiles.get($signer) )
+	#foreach( $profile in $orderedMissingSignatureProfiles)
 	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
 	#end
 	#if($signAs)

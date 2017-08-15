@@ -48,4 +48,12 @@ public class ContextHelper {
 		return ret;
 	}
 	
+	public SortedSet<UserProfile> getOrderedProfiles(UserManager userManager, Set<String> userNames) {
+		SortedSet<UserProfile> ret = new TreeSet<UserProfile>(new UserProfileByName());
+		for (String userName : userNames) {
+			ret.add(userManager.getUserProfile(userName));
+		}
+		return ret;
+	}
+	
 }
