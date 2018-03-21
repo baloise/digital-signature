@@ -11,13 +11,6 @@
 	<!-- add our i18n resource -->
 	<resource type="i18n" name="i18n" location="digital-signature" />
 	<resource type="download" name="images/" location="/images"/>
-
-	<component-import key="bandanaManager"  interface="com.atlassian.bandana.BandanaManager"/>
- 	<component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" />
- 	<component-import key="bootstrapManager" interface="com.atlassian.confluence.setup.BootstrapManager" />
-	<component-import key="settingsManager" interface="com.atlassian.confluence.setup.settings.SettingsManager" />
-	<component-import key="notificationService" interface="com.atlassian.mywork.service.LocalNotificationService"/>
-	<component-import key="mailServerManager" interface="com.atlassian.mail.server.MailServerManager"/>
 	
 	<!-- add our web resources -->
 	<web-resource key="digital-signature-resources" name="digital-signature Web Resources">
