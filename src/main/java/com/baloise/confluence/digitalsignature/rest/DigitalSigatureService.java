@@ -144,7 +144,7 @@ public class DigitalSigatureService {
 	
 	@GET
 	@Path("export")
-	@Produces({"text/html"})
+	@Produces("text/html; charset=UTF-8")
 	@HtmlSafe
 	public String export(@QueryParam("key") final String key) {
 		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
