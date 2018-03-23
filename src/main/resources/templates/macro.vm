@@ -3,21 +3,21 @@
 <div class="panel" style="border-width: 1px;">
 	#if($title)
 		<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title</b>
-		<span class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;cursor:pointer;" onclick="window.open('$downloadURL', 'document')" title="Export document">PDF</span>
+		<div class="aui-buttons" style="float: right">
+		<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="Export document">PDF</a>
 		#if($mailtoSigned || $mailtoMissing)
-				<div class="aui-buttons" style="float:right">
-					<span class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-controls="dropdown2-more" aria-expanded="false" aria-owns="area$UUID" style="float:right;" title="Send email">Email</span>
-					<div id="area$UUID" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true">
-				        <ul class="aui-list-truncate">
-				        	#if($mailtoSigned)
-				            <li><a href="$mailtoSigned">Already signed</a></li>
-				            #end
-				            #if($mailtoMissing)
-				            <li><a href="$mailtoMissing">Not yet signed</a></li>
-				            #end
-				        </ul>
-					</div>
+				<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="Send email">Email</a>
+				<div id="area$UUID" class="aui-dropdown2 aui-style-default">
+			        <ul class="aui-list-truncate">
+			        	#if($mailtoSigned)
+			            <li><a href="$mailtoSigned">Already signed</a></li>
+			            #end
+			            #if($mailtoMissing)
+			            <li><a href="$mailtoMissing">Not yet signed</a></li>
+			            #end
+			        </ul>
 				</div>
+			</div>
 		#end
 		</div>
 	#end
