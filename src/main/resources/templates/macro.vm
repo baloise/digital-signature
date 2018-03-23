@@ -3,10 +3,10 @@
 <div class="panel" style="border-width: 1px;">
 	#if($title)
 		<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title</b>
-		<span class="icon icon-file-pdf" style="float:right;cursor:pointer;" onclick="window.open('$downloadURL', 'document')" title="Export document">PDF</span>
+		<span class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;cursor:pointer;" onclick="window.open('$downloadURL', 'document')" title="Export document">PDF</span>
 		#if($mailtoSigned || $mailtoMissing)
 				<div class="aui-buttons" style="float:right">
-					<span class="icon icon-mail aui-dropdown2-trigger" aria-haspopup="true" aria-controls="dropdown2-more" aria-expanded="false" aria-owns="area$UUID" style="float:right;" title="Send email">Email</span>
+					<span class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-controls="dropdown2-more" aria-expanded="false" aria-owns="area$UUID" style="float:right;" title="Send email">Email</span>
 					<div id="area$UUID" class="aui-dropdown2 aui-style-default" role="menu" aria-hidden="true">
 				        <ul class="aui-list-truncate">
 				        	#if($mailtoSigned)
