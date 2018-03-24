@@ -1,6 +1,9 @@
 package com.baloise.confluence.digitalsignature;
 
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
+import static com.atlassian.confluence.security.ContentPermission.EDIT_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static com.atlassian.html.encode.HtmlEncoder.encode;
@@ -20,10 +23,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
+import com.atlassian.confluence.core.DefaultSaveContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
+import com.atlassian.confluence.pages.Page;
+import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.security.ContentPermission;
 import com.atlassian.confluence.security.ContentPermissionSet;
+import com.atlassian.confluence.security.Permission;
+import com.atlassian.confluence.security.PermissionManager;
 import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
@@ -38,19 +46,26 @@ public class DigitalSignatureMacro implements Macro {
 	private BandanaManager bandanaManager;
 	private UserManager userManager;
 	private  BootstrapManager bootstrapManager;
+	private  PageManager pageManager;
 	private final String REST_PATH = "/rest/signature/1.0";
+	private final String DISPLAY_PATH = "/display";
 	private ContextHelper contextHelper = new ContextHelper();
 	private final transient Markdown markdown = new Markdown();
+	private final PermissionManager permissionManager;
 	
 	@Autowired
 	public DigitalSignatureMacro(
 			@ComponentImport BandanaManager bandanaManager, 
 			@ComponentImport UserManager userManager,
-			@ComponentImport BootstrapManager bootstrapManager		
+			@ComponentImport BootstrapManager bootstrapManager,		
+			@ComponentImport PageManager pageManager,
+			@ComponentImport PermissionManager permissionManager
 			) {
 		this.bandanaManager = bandanaManager;
 		this.userManager = userManager;
 		this.bootstrapManager = bootstrapManager;
+		this.pageManager = pageManager;
+		this.permissionManager = permissionManager;
 	}
 
 	@Override
@@ -60,8 +75,9 @@ public class DigitalSignatureMacro implements Macro {
 					getSet(params, "signers"), 
 					loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
 					);
+			Page page = (Page) conversionContext.getEntity();
 			Signature signature = sync(new Signature(
-					conversionContext.getEntity().getLatestVersionId(), 
+					page.getLatestVersionId(), 
 					body, 
 					params.get("title"))
 					.withNotified(getSet(params, "notified")),
@@ -69,6 +85,33 @@ public class DigitalSignatureMacro implements Macro {
 					);
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
 			String currentUserName = currentUser.getName();
+			boolean protectedContent = getBoolean(params, "protectedContent", false);
+			boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, page) ||signature.hasSigned(currentUserName));
+			
+			if(protectedContent) {
+				Page protectedPage = pageManager.getPage(conversionContext.getSpaceKey(), signature.getProtectedKey());
+				if(protectedPage == null) {
+					ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
+					if(editors == null || editors.size() == 0) {
+						return warning("You need to <a class=\"system-metadata-restrictions\">restict</a> page access and have at least one edit permission in order to allow protected content.");
+					}
+					protectedPage = new Page();
+					protectedPage.setSpace(page.getSpace());
+			        protectedPage.setParentPage(page);
+			        protectedPage.setVersion(1);
+			        protectedPage.setCreator(page.getCreator());
+					for (ContentPermission editor : editors) {
+						protectedPage.addPermission(createUserPermission(EDIT_PERMISSION, editor.getUserSubject()));
+						protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, editor.getUserSubject()));
+					}
+					for(String signedUserName : signature.getSignatures().keySet()) {
+						protectedPage.addPermission(createUserPermission(VIEW_PERMISSION,signedUserName));
+					}
+					protectedPage.setTitle(signature.getProtectedKey());
+					pageManager.saveContentEntity(protectedPage, DefaultSaveContext.DEFAULT);
+					page.addChild(protectedPage);
+				}
+			}
 			
 			Map<String,Object> context = defaultVelocityContext();
 			context.put("signature",  signature);
@@ -85,20 +128,28 @@ public class DigitalSignatureMacro implements Macro {
 				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
 			}
 			context.put("panel",  getBoolean(params, "panel", true));
+			context.put("protectedContent",  protectedContentAccess);
+			if(protectedContentAccess) {
+				context.put("protectedContentURL",  bootstrapManager.getWebAppContextPath()+ DISPLAY_PATH+"/"+page.getSpaceKey()+"/"+signature.getProtectedKey());
+			}
 			context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle()));
 			context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle()));
 		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
 		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
 		    return getRenderedTemplate("templates/macro.vm", context);
 		} 
+		return warning("You need to enter at least 10 characters of text to be signed.");
+		
+		
+	}
+
+	private String warning(String message) {
 		return "<div class=\"aui-message aui-message-warning\">\n" + 
 				"    <p class=\"title\">\n" + 
 				"        <strong>Signature Macro</strong>\n" + 
 				"    </p>\n" + 
-				"    <p>You need to enter at least 10 characters of text to be signed.</p>\n" + 
+				"    <p>"+message+"</p>\n" + 
 				"</div>";
-		
-		
 	}
 
 	private Set<String> loadInheritedSigners(InheritSigners inheritSigners, ConversionContext conversionContext) {

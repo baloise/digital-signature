@@ -1,5 +1,7 @@
 package com.baloise.confluence.digitalsignature.rest;
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
+import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
@@ -28,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.confluence.pages.Page;
+import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
@@ -59,19 +63,22 @@ public class DigitalSigatureService {
 	private final MailServerManager mailServerManager;
 	private final ContextHelper contextHelper = new ContextHelper();
 	private final transient Markdown markdown = new Markdown();
+	private final PageManager pageManager;
 	 
    public DigitalSigatureService(
 		   @ComponentImport BandanaManager bandanaManager, 
 		   @ComponentImport SettingsManager settingsManager,
 		   @ComponentImport UserManager userManager, 
 		   @ComponentImport LocalNotificationService notificationService,
-		   @ComponentImport MailServerManager mailServerManager
+		   @ComponentImport MailServerManager mailServerManager,
+		   @ComponentImport PageManager pageManager
 		   ) {
 		this.settingsManager = settingsManager;
 		this.bandanaManager = bandanaManager;
 		this.notificationService = notificationService;
 		this.userManager = userManager;
 		this.mailServerManager = mailServerManager;
+		this.pageManager = pageManager;
 	}
 
 	@GET
@@ -93,7 +100,12 @@ public class DigitalSigatureService {
 		for(String notifiedUser : signature.getNotify()) {
 				notify(notifiedUser,confluenceUser, signature, baseUrl);
 		}
-		
+		Page parentPage = pageManager.getPage(signature.getPageId());
+		Page protectedPage = pageManager.getPage(parentPage.getSpaceKey(), signature.getProtectedKey());
+		if(protectedPage != null) {
+			protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, confluenceUser));
+			pageManager.saveContentEntity(protectedPage,null);
+		}
 		URI pageUri = create(settingsManager.getGlobalSettings().getBaseUrl()+ "/pages/viewpage.action?pageId="+signature.getPageId());
 		return temporaryRedirect(pageUri).build();
 	}

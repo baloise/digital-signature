@@ -31,6 +31,9 @@ public class Signature implements Serializable {
 	public String getKey() {
 		return key;
 	}
+	public String getProtectedKey() {
+		return getKey().replace("signature.", "protected.");
+	}
 	public void setKey(String key) {
 		this.key = key;
 	}
@@ -100,6 +103,10 @@ public class Signature implements Serializable {
 	public Signature withNotified(Set<String> notified) {
 		this.notified = notified;
 		return this;
+	}
+	
+	public boolean hasSigned(String userName) {
+		return signatures.containsKey(userName);
 	}
 	
 }

@@ -45,6 +45,7 @@
 			<parameter name="title" multiple="false" type="string" required="false"/>
 			<parameter name="notified" multiple="true" type="username" required="false"/>
 			<parameter name="panel" type="boolean" required="true" default="true" />
+			<parameter name="protectedContent" type="boolean" required="true" default="false" />
 		</parameters>
 	</xhtml-macro>
 	
