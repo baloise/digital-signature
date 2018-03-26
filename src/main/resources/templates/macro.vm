@@ -5,7 +5,7 @@
 		<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title</b>
 		<div class="aui-buttons" style="float: right">
 		#if($protectedContent)
-	    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="Protected documents">Documents</a>
+	    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="Protected documents" style="margin-right:20px;">Documents</a>
 	    #end
 		<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="Export document">PDF</a>
 		#if($mailtoSigned || $mailtoMissing)
