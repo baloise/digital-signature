@@ -1,5 +1,7 @@
 package com.baloise.confluence.digitalsignature;
 
+import static java.lang.String.format;
+
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,22 +28,25 @@ public class ContextHelper {
 		ret.addAll(signature.getSignatures().entrySet());
 		return ret;
 	}
-	public <K,V> Map<K,V> union(Map<K,V> map1, Map<K,V> map2) {
-		Map<K,V> union = new HashMap<K,V>(map1.size()+map2.size());
-		union.putAll(map1);
-		union.putAll(map2);
+	public <K,V> Map<K,V> union(Map<K,V> ...maps) {
+		Map<K,V> union = new HashMap<K,V>();
+		for (Map<K, V> map : maps) {
+			union.putAll(map);
+		}
 		return union;
 	}
 	
-	public <K> Set<K> union(Set<K> s1, Set<K> s2) {
-		Set<K> union = new HashSet<K>(s1.size()+s2.size());
-		union.addAll(s1);
-		union.addAll(s2);
+	public <K> Set<K> union(Set<K> ...sets) {
+		Set<K> union = new HashSet<K>();
+		for (Set<K> set : sets) {
+			union.addAll(set);
+		}
 		return union;
 	}
 	
 	public Map<String, UserProfile> getProfiles(UserManager userManager, Set<String>  userNames) {
 		Map<String, UserProfile> ret  = new HashMap<String, UserProfile>();
+		if(Signature.isPetitionMode(userNames)) return ret;
 		for (String userName : userNames) {
 			ret.put(userName, userManager.getUserProfile(userName));
 		}
@@ -50,10 +55,14 @@ public class ContextHelper {
 	
 	public SortedSet<UserProfile> getOrderedProfiles(UserManager userManager, Set<String> userNames) {
 		SortedSet<UserProfile> ret = new TreeSet<UserProfile>(new UserProfileByName());
+		if(Signature.isPetitionMode(userNames)) return ret;
 		for (String userName : userNames) {
 			ret.add(userManager.getUserProfile(userName));
 		}
 		return ret;
+	}
+	public String mailTo(UserProfile profile) {
+		return format("%s<%s>", profile.getFullName().trim(), profile.getEmail().trim());
 	}
 	
 }

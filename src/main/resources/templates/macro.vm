@@ -2,25 +2,25 @@
 #if( $panel )
 <div class="panel" style="border-width: 1px;">
 	<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title &nbsp;</b>
-	<div class="aui-buttons" style="float: right">
-	#if($protectedContent)
-    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="Protected documents" style="margin-right:20px;">Documents</a>
-    #end
-	<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="Export document">PDF</a>
-	#if($mailtoSigned || $mailtoMissing)
-			<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="Send email">Email</a>
-			<div id="area$UUID" class="aui-dropdown2 aui-style-default">
-		        <ul class="aui-list-truncate">
-		        	#if($mailtoSigned)
-		            <li><a href="$mailtoSigned">Already signed</a></li>
-		            #end
-		            #if($mailtoMissing)
-		            <li><a href="$mailtoMissing">Not yet signed</a></li>
-		            #end
-		        </ul>
-			</div>
+		<div class="aui-buttons" style="float: right">
+			#if($protectedContent)
+		    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="Protected documents" style="margin-right:20px;">Documents</a>
+		    #end
+			<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="Export document">PDF</a>
+			#if($mailtoSigned || $mailtoMissing)
+				<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="Send email">Email</a>
+				<div id="area$UUID" class="aui-dropdown2 aui-style-default">
+			        <ul class="aui-list-truncate">
+			        	#if($mailtoSigned)
+			            <li><a href="$mailtoSigned" target="mailto">Already signed</a></li>
+			            #end
+			            #if($mailtoMissing)
+			            <li><a href="$mailtoMissing" target="mailto">Not yet signed</a></li>
+			            #end
+			        </ul>
+				</div>
+			#end
 		</div>
-	#end
 	</div>
 <div class="panelContent">
 #else

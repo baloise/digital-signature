@@ -1,0 +1,13 @@
+Email adresses of users who <b>$signedOrNot</b> <i>$signature.getTitle()</i> ( $signature.getHash() )<br/>
+<label for="withNames" >With names</label>
+<input type="checkbox" $withNamesChecked onclick="location.href='$toggleWithNamesURL'" id="withNames" value="withNames">
+<br/>
+<label for="signed" >signed</label>
+<input type="checkbox" $signedChecked onclick="location.href='$toggleSignedURL'" id="signed" value="signed">
+<pre>
+#foreach( $email in $emails)
+$email
+#end
+</pre>
+
+<!-- generated $date.format("dd.MM.yyyy HH:mm",$currentDate) -->

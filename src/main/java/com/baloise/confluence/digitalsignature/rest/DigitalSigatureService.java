@@ -7,6 +7,7 @@ import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTe
 import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
 import static java.lang.String.format;
 import static java.net.URI.create;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 
@@ -14,6 +15,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -87,13 +89,12 @@ public class DigitalSigatureService {
 		ConfluenceUser confluenceUser = AuthenticatedUserThreadLocal.get();
 		String userName = confluenceUser.getName();
 		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
-		if(!signature.getMissingSignatures().remove(userName)) {
+		if(!signature.sign(userName)) {
 			 status(Response.Status.BAD_REQUEST)
             .entity(userName +" is not expected to sign document "+ key)
             .type( MediaType.TEXT_PLAIN)
             .build();
 		}
-		signature.getSignatures().put(userName, new Date());
 		bandanaManager.setValue(GLOBAL_CONTEXT, key, signature);
 		
 		String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
@@ -119,6 +120,9 @@ public class DigitalSigatureService {
 									baseUrl+"/pages/viewpage.action?pageId="+signature.getPageId(),
 									signature.getTitle()
 									);
+			if(signature.isMaxSignaturesReached()) {
+				html = html + format(" - max of %s sginatures reached.", signature.getMaxSignatures());
+			}
 			String titleText = signedUser.getFullName()+" signed "+signature.getTitle();
 			notificationService.createOrUpdate(notifiedUser, new NotificationBuilder()
 		            .application(PLUGIN_KEY) // a unique key that identifies your plugin
@@ -163,7 +167,6 @@ public class DigitalSigatureService {
 		
 		Map<String,Object> context = defaultVelocityContext();
 		context.put("signature",  signature);
-		context.put("date", new DateTool());
 		context.put("markdown", markdown);
 		Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
 		Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
@@ -172,8 +175,31 @@ public class DigitalSigatureService {
 		context.put("profiles",  contextHelper.union(signed, missing));
 		
 		context.put("currentDate", new Date());
+		context.put("date", new DateTool());
 		
 		return getRenderedTemplate("templates/export.vm", context);
+	}
+	
+	@GET
+	@Path("emails")
+	@Produces("text/html; charset=UTF-8")
+	public Response emails(@QueryParam("key") final String key, @QueryParam("signed") final boolean signed, @QueryParam("emailOnly") final boolean emailOnly, @Context UriInfo uriInfo) {
+		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
+		Map<String, UserProfile> profiles  = contextHelper.getProfiles(userManager, signed ? signature.getSignatures().keySet() : signature.getMissingSignatures());
+		
+		Map<String,Object> context = defaultVelocityContext();
+		context.put("signature",  signature);
+		context.put("signedOrNot",  signed ? "signed" : "did not sign" );
+		context.put("withNamesChecked",  emailOnly ? "" : "checked");
+		context.put("signedChecked",  signed ? "checked" : "");
+		context.put("toggleWithNamesURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("emailOnly", !emailOnly).build());
+		context.put("toggleSignedURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("signed", !signed).build());
+		Function<UserProfile, String> mapping = p -> (emailOnly ? p.getEmail() : contextHelper.mailTo(p)).trim();
+		context.put("emails", profiles.values().stream().map(mapping).collect(toList()));
+		
+		context.put("currentDate", new Date());
+		context.put("date", new DateTool());
+		return Response.ok(getRenderedTemplate("templates/email.vm", context)).build();
 	}
 
 }

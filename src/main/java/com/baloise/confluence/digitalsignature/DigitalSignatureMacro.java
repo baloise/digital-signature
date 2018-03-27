@@ -7,7 +7,6 @@ import static com.atlassian.confluence.security.ContentPermission.createUserPerm
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static com.atlassian.html.encode.HtmlEncoder.encode;
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 import java.util.Collection;
@@ -39,10 +38,13 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.user.EntityException;
+import com.atlassian.user.Group;
+import com.atlassian.user.GroupManager;
+import com.atlassian.user.search.page.Pager;
 
 @Scanned
 public class DigitalSignatureMacro implements Macro {
-	private final int MAX_MAILTO_CHARACTER_COUNT = 500;
 	private BandanaManager bandanaManager;
 	private UserManager userManager;
 	private  BootstrapManager bootstrapManager;
@@ -52,6 +54,10 @@ public class DigitalSignatureMacro implements Macro {
 	private ContextHelper contextHelper = new ContextHelper();
 	private final transient Markdown markdown = new Markdown();
 	private final PermissionManager permissionManager;
+	private GroupManager groupManager;
+	private final Set<String> all = new HashSet<String>();
+	final int MAX_MAILTO_CHARACTER_COUNT = 500;
+	
 	
 	@Autowired
 	public DigitalSignatureMacro(
@@ -59,27 +65,36 @@ public class DigitalSignatureMacro implements Macro {
 			@ComponentImport UserManager userManager,
 			@ComponentImport BootstrapManager bootstrapManager,		
 			@ComponentImport PageManager pageManager,
-			@ComponentImport PermissionManager permissionManager
+			@ComponentImport PermissionManager permissionManager,
+			@ComponentImport GroupManager groupManager
 			) {
 		this.bandanaManager = bandanaManager;
 		this.userManager = userManager;
 		this.bootstrapManager = bootstrapManager;
 		this.pageManager = pageManager;
 		this.permissionManager = permissionManager;
+		this.groupManager = groupManager;
+		all.add("*");
 	}
 
 	@Override
 	public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {
 		if(body != null && body.length() > 10) {
-			Set<String> signers = contextHelper.union(
+			Set<String> userGroups = getSet(params, "signerGroups");
+			boolean petitionMode =  Signature.isPetitionMode(userGroups);
+			@SuppressWarnings("unchecked")
+			Set<String> signers = petitionMode ? all : contextHelper.union(
 					getSet(params, "signers"), 
+					loadUserGroups(userGroups),
 					loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
 					);
 			Page page = (Page) conversionContext.getEntity();
+			long maxSignatures = getLong(params, "maxSignatures", -1);
 			Signature signature = sync(new Signature(
 					page.getLatestVersionId(), 
 					body, 
-					params.get("title"))
+					params.get("title"),
+					maxSignatures)
 					.withNotified(getSet(params, "notified")),
 					signers
 					);
@@ -123,8 +138,8 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("orderedMissingSignatureProfiles",  contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
 			context.put("profiles",  contextHelper.union(signed, missing));
 			
-			if(signature.getMissingSignatures().contains(currentUserName)) {
-				context.put("signAs",  missing.get(currentUserName).getFullName());
+			if(signature.isSignatureMissing(currentUserName)) {
+				context.put("signAs", userManager.getUserProfile(currentUserName).getFullName());
 				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
 			}
 			context.put("panel",  getBoolean(params, "panel", true));
@@ -132,8 +147,8 @@ public class DigitalSignatureMacro implements Macro {
 			if(protectedContentAccess) {
 				context.put("protectedContentURL",  bootstrapManager.getWebAppContextPath()+ DISPLAY_PATH+"/"+page.getSpaceKey()+"/"+signature.getProtectedKey());
 			}
-			context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle()));
-			context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle()));
+			context.put("mailtoSigned",  getMailto(signed.values(), signature.getTitle(), true, signature));
+			context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle(), false, signature));
 		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
 		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
 		    return getRenderedTemplate("templates/macro.vm", context);
@@ -177,40 +192,56 @@ public class DigitalSignatureMacro implements Macro {
 		ContentPermissionSet contentPermissionSet = conversionContext.getEntity().getContentPermissionSet(permission);
 		if(contentPermissionSet != null) {
 			  for (ContentPermission cp : contentPermissionSet) {
-				  users.add(cp.getUserSubject().getName());
-	            }
+				  if(cp.getGroupName()!= null) {
+					  users.addAll(loadUserGroup(cp.getGroupName()));
+				  }
+				  if(cp.getUserSubject() != null) {
+					  users.add(cp.getUserSubject().getName());
+				  }
+	          }
 		}
 		return users;
 	}
 
-	 String getMailto(Collection<UserProfile> profiles, String subject) {
-		 if(profiles ==  null || profiles.isEmpty()) return null;
-		 StringBuilder ret = new StringBuilder("mailto:");
-		 for (UserProfile profile : profiles) {
-			if(ret.length()>7) ret.append(',');
-			ret.append(format("%s<%s>", profile.getFullName().trim(), profile.getEmail().trim()));
-		 }
-		 ret.append("?Subject="+encode(subject));
-		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
-			ret.setLength(0);
-			ret.append("mailto:");
-			for (UserProfile profile : profiles) {
-				if(ret.length()>7) ret.append(',');
-				ret.append(profile.getEmail().trim());
-			 }
-			 ret.append("?Subject="+encode(subject));
-		 }
-		 return ret.toString();
+	private Set<String> loadUserGroups(Iterable<String > groupNames) {
+		Set<String> ret = new HashSet<String>();
+		for (String groupName : groupNames) {
+			ret.addAll(loadUserGroup(groupName));
+		}
+		return ret;
 	}
 	
+	private Set<String> loadUserGroup(String groupName) {
+		Set<String> ret = new HashSet<String>();
+		try {
+			if(groupName == null) return ret;
+			Group group = groupManager.getGroup(groupName.trim());
+			if(group == null) return ret;
+			Pager<String> pager = groupManager.getMemberNames(group);
+			while(!pager.onLastPage()) {
+				ret.addAll(pager.getCurrentPage());
+				pager.nextPage();
+			}
+			ret.addAll(pager.getCurrentPage());
+		} catch (EntityException e) {
+			e.printStackTrace();
+		}		
+		return ret;
+	}
+
 	private Boolean getBoolean(Map<String, String> params, String key, Boolean fallback) {
 		String value = params.get(key);
 		return value == null ? fallback : Boolean.valueOf(value) ;
 	}
+	
+	private long getLong(Map<String, String> params, String key, long fallback) {
+		String value = params.get(key);
+		return value == null ? fallback : Long.valueOf(value) ;
+	}
 
 	private Set<String> getSet(Map<String, String> params, String key) {
 		String value = params.get(key);
-		return value == null || value.trim().isEmpty() ? new TreeSet<String>() : new TreeSet<String>(asList(value.split("[;,]")));
+		return value == null || value.trim().isEmpty() ? new TreeSet<String>() : new TreeSet<String>(asList(value.split("[;, ]+")));
 	}
 
 	private Signature sync(Signature signature, Set<String> signers) {
@@ -228,6 +259,10 @@ public class DigitalSignatureMacro implements Macro {
 			signature.setMissingSignatures(signers);
 			if(!Objects.equals(loaded.getMissingSignatures(),signature.getMissingSignatures())) {
 				loaded.setMissingSignatures(signature.getMissingSignatures());
+				save = true;
+			}
+			if(loaded.getMaxSignatures() != signature.getMaxSignatures()) {
+				loaded.setMaxSignatures(signature.getMaxSignatures());
 				save = true;
 			}
 			
@@ -252,6 +287,29 @@ public class DigitalSignatureMacro implements Macro {
 	@Override
 	public OutputType getOutputType() {
 		return OutputType.BLOCK;
+	}
+
+	String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
+		 if(profiles ==  null || profiles.isEmpty()) return null;
+		 StringBuilder ret = new StringBuilder("mailto:");
+		 for (UserProfile profile : profiles) {
+			if(ret.length()>7) ret.append(',');
+			ret.append(contextHelper.mailTo(profile));
+		 }
+		 ret.append("?Subject="+encode(subject));
+		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
+			ret.setLength(0);
+			ret.append("mailto:");
+			for (UserProfile profile : profiles) {
+				if(ret.length()>7) ret.append(',');
+				ret.append(profile.getEmail().trim());
+			 }
+			 ret.append("?Subject="+encode(subject));
+		 }
+		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
+			 return bootstrapManager.getWebAppContextPath()+ REST_PATH+"/emails?key="+signature.getKey()+"&signed="+signed;
+		 }
+		 return ret.toString();
 	}
 
 }

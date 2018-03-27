@@ -14,25 +14,38 @@ public class Signature implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	private String key = "";
+	private String hash = "";
 	private long pageId;
 	private String title = "";
 	private String body = "";
+	private long maxSignatures = -1;
 	private Map<String, Date> signatures = new HashMap<String, Date>();
 	private Set<String> missingSignatures = new TreeSet<String>();
 	private Set<String> notified = new TreeSet<String>();
 	
 	public Signature() {}
-	public Signature(long pageId, String body,String title) {
+	public Signature(long pageId, String body,String title, long maxSignatures) {
 		this.pageId = pageId;
 		this.body = body;
 		this.title = title == null ? "" : title;
-		key = "signature."+sha256Hex(pageId +":"+ title +":" + body);
+		hash = sha256Hex(pageId +":"+ title +":" + body);
+		key = "signature."+hash;
+		this.maxSignatures = maxSignatures;
+	}
+	public String getHash() {
+		if(hash == null) {
+			hash = getKey().replace("signature.", "");
+		}
+		return hash;
+	}
+	public void setHash(String hash) {
+		this.hash = hash;
 	}
 	public String getKey() {
 		return key;
 	}
 	public String getProtectedKey() {
-		return getKey().replace("signature.", "protected.");
+		return "protected."+getHash();
 	}
 	public void setKey(String key) {
 		this.key = key;
@@ -61,8 +74,12 @@ public class Signature implements Serializable {
 	public void setMissingSignatures(Set<String> missingSignatures) {
 		this.missingSignatures = missingSignatures;
 	}
-	
-	
+	public long getMaxSignatures() {
+		return maxSignatures;
+	}
+	public void setMaxSignatures(long maxSignatures) {
+		this.maxSignatures = maxSignatures;
+	}
 	public String getTitle() {
 		return title;
 	}
@@ -109,4 +126,25 @@ public class Signature implements Serializable {
 		return signatures.containsKey(userName);
 	}
 	
+	public boolean isPetitionMode() {
+		return isPetitionMode(getMissingSignatures());
+	}
+	
+	public static boolean isPetitionMode(Set<String> userGroups) {
+		return userGroups != null && userGroups.size() == 1 && userGroups.iterator().next().trim().equals("*");
+	}
+	public boolean sign(String userName) {
+		if(!isMaxSignaturesReached() &&  !isPetitionMode() && !getMissingSignatures().remove(userName)) {
+			return false;
+		} else {
+			getSignatures().put(userName, new Date());
+			return true;
+		}
+	}
+	public boolean isMaxSignaturesReached() {
+		return maxSignatures > -1 && maxSignatures <= getSignatures().size();
+	}
+	public boolean isSignatureMissing(String userName) {
+		return !isMaxSignaturesReached() && (isPetitionMode() || getMissingSignatures().contains(userName));
+	}
 }
