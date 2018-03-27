@@ -9,6 +9,8 @@ import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTe
 import static com.atlassian.html.encode.HtmlEncoder.encode;
 import static java.util.Arrays.asList;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -296,7 +298,7 @@ public class DigitalSignatureMacro implements Macro {
 			if(ret.length()>7) ret.append(',');
 			ret.append(contextHelper.mailTo(profile));
 		 }
-		 ret.append("?Subject="+encode(subject));
+		 ret.append("?Subject="+urlEncode(subject));
 		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
 			ret.setLength(0);
 			ret.append("mailto:");
@@ -304,12 +306,20 @@ public class DigitalSignatureMacro implements Macro {
 				if(ret.length()>7) ret.append(',');
 				ret.append(profile.getEmail().trim());
 			 }
-			 ret.append("?Subject="+encode(subject));
+			 ret.append("?Subject="+urlEncode(subject));
 		 }
 		 if(ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
 			 return bootstrapManager.getWebAppContextPath()+ REST_PATH+"/emails?key="+signature.getKey()+"&signed="+signed;
 		 }
 		 return ret.toString();
+	}
+
+	public String urlEncode(String string) {
+		try {
+			return URLEncoder.encode(string, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 }
