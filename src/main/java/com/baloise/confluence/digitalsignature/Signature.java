@@ -149,7 +149,7 @@ public class Signature implements Serializable {
 		return maxSignatures > -1 && maxSignatures <= getSignatures().size();
 	}
 	public boolean isSignatureMissing(String userName) {
-		return !isMaxSignaturesReached() && (isPetitionMode() || getMissingSignatures().contains(userName));
+		return !isMaxSignaturesReached() && !hasSigned(userName)  && (isPetitionMode() || getMissingSignatures().contains(userName));
 	}
 	public boolean hasMissingSignatures() {
 		return !isMaxSignaturesReached() && (isPetitionMode() || !getMissingSignatures().isEmpty());
