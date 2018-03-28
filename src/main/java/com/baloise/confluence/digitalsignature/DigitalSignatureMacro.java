@@ -80,7 +80,7 @@ public class DigitalSignatureMacro implements Macro {
 	}
 
 	@Override
-	public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {
+	public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {		
 		if(body != null && body.length() > 10) {
 			Set<String> userGroups = getSet(params, "signerGroups");
 			boolean petitionMode =  Signature.isPetitionMode(userGroups);
@@ -276,7 +276,7 @@ public class DigitalSignatureMacro implements Macro {
 	}
 
 	private void save(Signature signature) {
-		if(!signature.getMissingSignatures().isEmpty())
+		if(signature.hasMissingSignatures())
 			bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
 	}
 

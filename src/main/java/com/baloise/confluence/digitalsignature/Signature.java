@@ -151,4 +151,7 @@ public class Signature implements Serializable {
 	public boolean isSignatureMissing(String userName) {
 		return !isMaxSignaturesReached() && (isPetitionMode() || getMissingSignatures().contains(userName));
 	}
+	public boolean hasMissingSignatures() {
+		return !isMaxSignaturesReached() && (isPetitionMode() || !getMissingSignatures().isEmpty());
+	}
 }
