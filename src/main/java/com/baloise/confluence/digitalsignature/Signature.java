@@ -24,13 +24,12 @@ public class Signature implements Serializable {
 	private Set<String> notified = new TreeSet<String>();
 	
 	public Signature() {}
-	public Signature(long pageId, String body,String title, long maxSignatures) {
+	public Signature(long pageId, String body,String title) {
 		this.pageId = pageId;
 		this.body = body;
 		this.title = title == null ? "" : title;
 		hash = sha256Hex(pageId +":"+ title +":" + body);
 		key = "signature."+hash;
-		this.maxSignatures = maxSignatures;
 	}
 	public String getHash() {
 		if(hash == null) {
@@ -119,6 +118,11 @@ public class Signature implements Serializable {
 	
 	public Signature withNotified(Set<String> notified) {
 		this.notified = notified;
+		return this;
+	}
+	
+	public Signature withMaxSignatures(long maxSignatures) {
+		this.maxSignatures = maxSignatures;
 		return this;
 	}
 	

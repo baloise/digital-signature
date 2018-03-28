@@ -15,7 +15,7 @@ import com.atlassian.sal.api.user.UserProfile;
 
 public class DigitalSignatureMacroTest {
 
-	Signature signature = new Signature(1, "test", "title", 999);
+	Signature signature = new Signature(1, "test", "title");
 	
 	BootstrapManager bootstrapManager = mock(BootstrapManager.class);
 	

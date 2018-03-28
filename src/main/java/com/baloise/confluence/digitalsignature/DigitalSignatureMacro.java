@@ -91,13 +91,12 @@ public class DigitalSignatureMacro implements Macro {
 					loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
 					);
 			Page page = (Page) conversionContext.getEntity();
-			long maxSignatures = getLong(params, "maxSignatures", -1);
 			Signature signature = sync(new Signature(
 					page.getLatestVersionId(), 
 					body, 
-					params.get("title"),
-					maxSignatures)
-					.withNotified(getSet(params, "notified")),
+					params.get("title"))
+					.withNotified(getSet(params, "notified"))
+					.withMaxSignatures(getLong(params, "maxSignatures", -1)),
 					signers
 					);
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();

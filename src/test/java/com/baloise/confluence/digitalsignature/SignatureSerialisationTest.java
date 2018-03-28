@@ -30,7 +30,7 @@ public class SignatureSerialisationTest {
 	@Test
 	@Ignore
 	public void serialise() throws IOException {
-		Signature signature = new Signature(123L, "body", "title", 5);
+		Signature signature = new Signature(123L, "body", "title");
 		signature.getNotify().add("notify1");
 		signature.getMissingSignatures().add("missing1");
 		signature.getMissingSignatures().add("missing2");
