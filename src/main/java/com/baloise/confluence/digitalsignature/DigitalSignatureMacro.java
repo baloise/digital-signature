@@ -6,7 +6,6 @@ import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSIO
 import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
-import static com.atlassian.html.encode.HtmlEncoder.encode;
 import static java.util.Arrays.asList;
 
 import java.io.UnsupportedEncodingException;
