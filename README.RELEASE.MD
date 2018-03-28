@@ -1,0 +1,6 @@
+- increase version in POM
+- atlas-mvn clean package
+- set tag
+- check fixed issues are assigned to milestone : https://github.com/baloise/digital-signature/milestones
+- merge onto release branch
+- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr
