@@ -179,11 +179,11 @@
     </pluginRepositories>
     <profiles>
         <profile>
-            <id>travis-release</id>
+            <id>travis</id>
             <activation>
                 <property>
-                    <name>env.TRAVIS_BRANCH</name>
-                    <value>release</value>
+                    <name>env.TRAVIS</name>
+                    <value>true</value>
                 </property>
             </activation>
             <build>
@@ -197,7 +197,7 @@
                             <repositoryOwner>baloise</repositoryOwner>
                             <repositoryName>${project.artifactId}</repositoryName>
                             <message>Releasing ${project.version}</message>
-                            <path>dist</path>
+                            <path>${env.TRAVIS_BRANCH}</path>
                             <includes>
                                 <include>${project.build.finalName}.jar</include>
                                 <include>${project.build.finalName}.obr</include>
