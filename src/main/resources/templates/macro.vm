@@ -4,18 +4,18 @@
 	<div class="panelHeader" style="border-bottom-width: 1px;color: #bbb;"><b>$title &nbsp;</b>
 		<div class="aui-buttons" style="float: right">
 			#if($protectedContent)
-		    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="Protected documents" style="margin-right:20px;">Documents</a>
+		    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label")" style="margin-right:20px;">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label")</a>
 		    #end
-			<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="Export document">PDF</a>
+			<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")</a>
 			#if($mailtoSigned || $mailtoMissing)
-				<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="Send email">Email</a>
+				<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.label")">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.label")</a>
 				<div id="area$UUID" class="aui-dropdown2 aui-style-default">
 			        <ul class="aui-list-truncate">
 			        	#if($mailtoSigned)
-			            <li><a href="$mailtoSigned" target="mailto">Already signed</a></li>
+			            <li><a href="$mailtoSigned" target="mailto">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.menu.already-signed")</a></li>
 			            #end
 			            #if($mailtoMissing)
-			            <li><a href="$mailtoMissing" target="mailto">Not yet signed</a></li>
+			            <li><a href="$mailtoMissing" target="mailto">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.menu.not-yet-signed")</a></li>
 			            #end
 			        </ul>
 				</div>
@@ -38,7 +38,7 @@
 	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
 	#end
 	#if($signAs)
-	 <li><form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()"><button class="aui-button" type="submit">Sign as $signAs</button></form></li> 
+	 <li><form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()"><button class="aui-button" type="submit">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.button.sign-as.label", [$signAs])</button></form></li> 
 	#end
 </ul>
 #if( $panel )

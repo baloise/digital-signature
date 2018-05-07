@@ -32,7 +32,6 @@
 		icon="/download/resources/${project.groupId}.${project.artifactId}/images/macro-icon.png"
 		documentation-url="https://github.com/baloise/digital-signature/wiki/Singature-Macro-Usage"
 		>
-		<description>sign off / approval</description>
 		<category name="confluence-content" />
 		<parameters>
 			<parameter name="title" multiple="false" type="string" required="false"/>
