@@ -1,3 +1,4 @@
+#set( $dateFormatter = $action.getDateFormatter())
 #set( $title =  $signature.getTitle())
 #if( $panel )
 <div class="panel" style="border-width: 1px;">
@@ -32,7 +33,7 @@
   	#foreach ($date2userName in $orderedSignatures)
   	    #set( $userName =  $date2userName.key)
   	    #set( $profile =  $profiles.get($userName))
-	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $date.format("dd.MM.yyyy HH:mm",$date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
+	    <li><input class="checkbox" type="checkbox" checked="checked" disabled="true"> $dateFormatter.formatDateTime($date2userName.value) - <a href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
 	#end
 	#foreach( $profile in $orderedMissingSignatureProfiles)
 	    <li style="color: #bbb;"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()</li>
