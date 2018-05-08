@@ -39,9 +39,9 @@
 			<parameter name="signerGroups" multiple="false" type="string" required="false"/>
 			<parameter name="inheritSigners" multiple="false" type="enum" required="true" default="none">
 				<value name="none"/>
-				<value name="readersOnly"/>
-				<value name="writersOnly"/>
-				<value name="both"/>
+				<value name="readers only"/>
+				<value name="writers only"/>
+				<value name="readers and writers"/>
 			</parameter>
 			<parameter name="maxSignatures" multiple="false" type="string" required="false"/>
 			<parameter name="notified" multiple="true" type="username" required="false"/>
