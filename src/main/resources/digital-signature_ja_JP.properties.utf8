@@ -1,0 +1,31 @@
+# changes in this file will not be reflected immediately in the built package
+# use e.g. `native2ascii digital-signature_ja_JP.properties.utf8 > digital-signature_ja_JP.properties` to encode into required unicode-encoded ASCII 
+# see https://developer.atlassian.com/server/framework/atlassian-sdk/internationalising-your-plugin/ (under "Please Note:")
+com.baloise.confluence.digital-signature.signature.label=署名パネル
+com.baloise.confluence.digital-signature.signature.desc=1名以上のConfluenceユーザーによって、テキストがデジタル的に署名される可能性がある署名パネルをを埋め込みます。
+com.baloise.confluence.digital-signature.signature.param.title.label=パネルタイトル
+com.baloise.confluence.digital-signature.signature.param.title.desc=署名パネルの先頭に表示されるテキスト。
+com.baloise.confluence.digital-signature.signature.param.signers.label=署名者
+com.baloise.confluence.digital-signature.signature.param.signers.desc=署名者グループ (下記) およびページ権限から継承される署名者 (下記) に加えて、パネル内でテキストを署名できるユーザー。
+com.baloise.confluence.digital-signature.signature.param.signerGroups.label=署名者グループ
+com.baloise.confluence.digital-signature.signature.param.signerGroups.desc=指定された署名者 (上記) およびページ権限から継承される署名者 (下記) に加え、パネルを署名できるConfluenceグループメンバーのコンマ区切りのリスト。グループ名を正確に入力する必要があります (例: group-name)。* (アスタリスク) を記入すると、あらゆるログイン済みユーザーに許可が与えられ、ページを見て署名を行うことができます。
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.label=ページ権限から署名者を継承する
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.desc=指定された署名者 (上記) および署名者グループのメンバー (上記) に加え、ページの読み取り、編集またはその双方の明確な権限を有するユーザーから署名者を継承します。
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.none.desc=なし
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.readers\ only.desc=読み取権限ユーザーだけ
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.writers\ only.desc=編集権限ユーザーだけ
+com.baloise.confluence.digital-signature.signature.param.inheritSigners.readers\ and\ writers.desc=その双方権限ユーザー
+com.baloise.confluence.digital-signature.signature.param.maxSignatures.label=最多署名数
+com.baloise.confluence.digital-signature.signature.param.maxSignatures.desc=パネル上で認められる最多署名数。(既存署名の変更なしでの署名を無効にするには、0を記入してください。)
+com.baloise.confluence.digital-signature.signature.param.notified.label=通知されるユーザー
+com.baloise.confluence.digital-signature.signature.param.notified.desc=パネルが署名された際に通知が送られるユーザー
+com.baloise.confluence.digital-signature.signature.param.panel.label=パネルを表示する
+com.baloise.confluence.digital-signature.signature.param.panel.desc=署名されるテキストの周囲に目立つ形でパネルを表示します。(オフになっていると、署名されるテキストが、残りのページ部分と混同される可能性があります。)
+com.baloise.confluence.digital-signature.signature.param.protectedContent.label=保護された子ページを作成する
+com.baloise.confluence.digital-signature.signature.param.protectedContent.desc=現在ページの下に保護された子ページを作成します。現在ページの編集権限を有するユーザーが、これを閲覧および編集することができ、パネルを署名したユーザーが、これを閲覧することができます。保護された子ページはパネルと同じキーを使うため、パネルタイトルとテキストの入力を完了し、その後このオプションにチェックを入れてから、保護された子ページを生成する必要がります。
+com.baloise.confluence.digital-signature.signature.macro.button.sign-as.label={0}として署名する
+com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label=保護されたページへ進む
+com.baloise.confluence.digital-signature.signature.macro.panel.export.label=署名パネルをエクスポートする
+com.baloise.confluence.digital-signature.signature.macro.panel.email.label=署名者にEメールを送る
+com.baloise.confluence.digital-signature.signature.macro.panel.email.menu.already-signed=完了済みの署名者
+com.baloise.confluence.digital-signature.signature.macro.panel.email.menu.not-yet-signed=保留中の署名者
