@@ -37,6 +37,7 @@ import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.atlassian.user.EntityException;
@@ -58,6 +59,7 @@ public class DigitalSignatureMacro implements Macro {
 	private GroupManager groupManager;
 	private final Set<String> all = new HashSet<String>();
 	final int MAX_MAILTO_CHARACTER_COUNT = 500;
+	private I18nResolver i18nResolver;
 	
 	
 	@Autowired
@@ -67,7 +69,8 @@ public class DigitalSignatureMacro implements Macro {
 			@ComponentImport BootstrapManager bootstrapManager,		
 			@ComponentImport PageManager pageManager,
 			@ComponentImport PermissionManager permissionManager,
-			@ComponentImport GroupManager groupManager
+			@ComponentImport GroupManager groupManager,
+			@ComponentImport I18nResolver i18nResolver
 			) {
 		this.bandanaManager = bandanaManager;
 		this.userManager = userManager;
@@ -75,6 +78,7 @@ public class DigitalSignatureMacro implements Macro {
 		this.pageManager = pageManager;
 		this.permissionManager = permissionManager;
 		this.groupManager = groupManager;
+		this.i18nResolver = i18nResolver;
 		all.add("*");
 	}
 
@@ -108,7 +112,7 @@ public class DigitalSignatureMacro implements Macro {
 				if(protectedPage == null) {
 					ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
 					if(editors == null || editors.size() == 0) {
-						return warning("You need to <a class=\"system-metadata-restrictions\">restict</a> page access and have at least one edit permission in order to allow protected content.");
+						return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.editPermissionRequiredForProtectedContent" ,"<a class=\"system-metadata-restrictions\">","</a>"));
 					}
 					protectedPage = new Page();
 					protectedPage.setSpace(page.getSpace());
@@ -152,8 +156,8 @@ public class DigitalSignatureMacro implements Macro {
 		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
 		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
 		    return getRenderedTemplate("templates/macro.vm", context);
-		} 
-		return warning("You need to enter at least 10 characters of text to be signed.");
+		}
+		return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
 		
 		
 	}
@@ -161,7 +165,7 @@ public class DigitalSignatureMacro implements Macro {
 	private String warning(String message) {
 		return "<div class=\"aui-message aui-message-warning\">\n" + 
 				"    <p class=\"title\">\n" + 
-				"        <strong>Signature Macro</strong>\n" + 
+				"        <strong>"+i18nResolver.getText("com.baloise.confluence.digital-signature.signature.label")+"</strong>\n" + 
 				"    </p>\n" + 
 				"    <p>"+message+"</p>\n" + 
 				"</div>";

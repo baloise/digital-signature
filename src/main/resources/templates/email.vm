@@ -1,9 +1,9 @@
 #set( $dateFormatter = $action.getDateFormatter())
-Email adresses of users who <b>$signedOrNot</b> <i>$signature.getTitle()</i> ( $signature.getHash() )<br/>
-<label for="withNames" >With names</label>
+$signedOrNotWithHtml<br/>
+<label for="withNames" >$i18n.getText("com.baloise.confluence.digital-signature.signature.service.message.label.withNames")</label>
 <input type="checkbox" $withNamesChecked onclick="location.href='$toggleWithNamesURL'" id="withNames" value="withNames">
 <br/>
-<label for="signed" >signed</label>
+<label for="signed" >$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.menu.already-signed")</label>
 <input type="checkbox" $signedChecked onclick="location.href='$toggleSignedURL'" id="signed" value="signed">
 <pre>
 #foreach( $email in $emails)

@@ -12,6 +12,7 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 
 import java.net.URI;
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -46,6 +47,7 @@ import com.atlassian.mywork.model.NotificationBuilder;
 import com.atlassian.mywork.service.LocalNotificationService;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.baloise.confluence.digitalsignature.ContextHelper;
@@ -66,6 +68,7 @@ public class DigitalSigatureService {
 	private final ContextHelper contextHelper = new ContextHelper();
 	private final transient Markdown markdown = new Markdown();
 	private final PageManager pageManager;
+	private I18nResolver i18nResolver;
 	 
    public DigitalSigatureService(
 		   @ComponentImport BandanaManager bandanaManager, 
@@ -73,7 +76,8 @@ public class DigitalSigatureService {
 		   @ComponentImport UserManager userManager, 
 		   @ComponentImport LocalNotificationService notificationService,
 		   @ComponentImport MailServerManager mailServerManager,
-		   @ComponentImport PageManager pageManager
+		   @ComponentImport PageManager pageManager,
+		   @ComponentImport I18nResolver i18nResolver
 		   ) {
 		this.settingsManager = settingsManager;
 		this.bandanaManager = bandanaManager;
@@ -81,6 +85,7 @@ public class DigitalSigatureService {
 		this.userManager = userManager;
 		this.mailServerManager = mailServerManager;
 		this.pageManager = pageManager;
+		this.i18nResolver = i18nResolver;
 	}
 
 	@GET
@@ -91,7 +96,7 @@ public class DigitalSigatureService {
 		Signature signature =  (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
 		if(!signature.sign(userName)) {
 			 status(Response.Status.BAD_REQUEST)
-            .entity(userName +" is not expected to sign document "+ key)
+            .entity(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.error.badUser",userName, key))
             .type( MediaType.TEXT_PLAIN)
             .build();
 		}
@@ -114,16 +119,21 @@ public class DigitalSigatureService {
 	private void notify(final String notifiedUser, ConfluenceUser signedUser, final Signature signature, final String baseUrl) {
 		try {
 			UserProfile notifiedUserProfile = userManager.getUserProfile(notifiedUser);
-			String html = format("<a href='%s'>%s</a> signed <a href='%s'>%s</a>",
-									baseUrl+ "/display/~"+signedUser.getName(),
-									signedUser.getFullName(),
+			
+			String user = format("<a href='%s'>%s</a>",
+					baseUrl+ "/display/~"+signedUser.getName(),
+					signedUser.getFullName()
+					);
+			String document = format("<a href='%s'>%s</a>",
 									baseUrl+"/pages/viewpage.action?pageId="+signature.getPageId(),
 									signature.getTitle()
 									);
+			String html = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", user, document);
 			if(signature.isMaxSignaturesReached()) {
-				html = html + format(" - max of %s sginatures reached.", signature.getMaxSignatures());
+				html = html +"<br/>" +i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.warning.maxSignaturesReached", signature.getMaxSignatures());
 			}
-			String titleText = signedUser.getFullName()+" signed "+signature.getTitle();
+			String titleText = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", signedUser.getFullName(), signature.getTitle());
+			
 			notificationService.createOrUpdate(notifiedUser, new NotificationBuilder()
 		            .application(PLUGIN_KEY) // a unique key that identifies your plugin
 		            .title(titleText)
@@ -189,7 +199,11 @@ public class DigitalSigatureService {
 		
 		Map<String,Object> context = defaultVelocityContext();
 		context.put("signature",  signature);
-		context.put("signedOrNot",  signed ? "signed" : "did not sign" );
+		String signatureText = format("<i>%s</i> ( %s )", signature.getTitle(), signature.getHash());
+		String rawTemplate = signed ? 
+				i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.signedUsersEmails"):
+				i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.unsignedUsersEmails");
+		context.put("signedOrNotWithHtml", MessageFormat.format(rawTemplate, "<b>", "</b>", signatureText));
 		context.put("withNamesChecked",  emailOnly ? "" : "checked");
 		context.put("signedChecked",  signed ? "checked" : "");
 		context.put("toggleWithNamesURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("emailOnly", !emailOnly).build());
