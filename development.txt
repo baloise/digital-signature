@@ -1,0 +1,8 @@
+Install 
+
+Apache Commons FileUpload Bundle
+http://central.maven.org/maven2/commons-fileupload/commons-fileupload/1.3/commons-fileupload-1.3.jar
+Atlassian PDK Install Plugin
+http://maven-us.nuxeo.org/nexus/content/repositories/public/com/atlassian/pdkinstall/pdkinstall-plugin/0.6/pdkinstall-plugin-0.6.jar
+
+atlas-install-plugin -p 8090 --context-path / --plugin-key com.baloise.confluence.digital-signature
