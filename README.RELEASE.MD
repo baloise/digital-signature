@@ -4,4 +4,4 @@
 - merge onto release branch
 - set tag
 - push and wait for https://travis-ci.org/baloise/digital-signature/branches to succeed
-- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr
+- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr ( from https://github.com/baloise/digital-signature/tree/gh-pages/release )
