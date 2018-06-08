@@ -14,6 +14,7 @@ import java.util.TreeSet;
 
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
+import com.baloise.confluence.digitalsignature.sal.DummyProfile;
 
 public class ContextHelper {
 	public Object getOrderedSignatures(Signature signature) {
@@ -48,16 +49,20 @@ public class ContextHelper {
 		Map<String, UserProfile> ret  = new HashMap<String, UserProfile>();
 		if(Signature.isPetitionMode(userNames)) return ret;
 		for (String userName : userNames) {
-			ret.put(userName, userManager.getUserProfile(userName));
+			ret.put(userName, getProfileNotNull(userManager, userName));
 		}
 		return ret;
+	}
+	public UserProfile getProfileNotNull(UserManager userManager, String userName) {
+		UserProfile profile = userManager.getUserProfile(userName);
+		return profile == null ? new DummyProfile(userName) : profile;
 	}
 	
 	public SortedSet<UserProfile> getOrderedProfiles(UserManager userManager, Set<String> userNames) {
 		SortedSet<UserProfile> ret = new TreeSet<UserProfile>(new UserProfileByName());
 		if(Signature.isPetitionMode(userNames)) return ret;
 		for (String userName : userNames) {
-			ret.add(userManager.getUserProfile(userName));
+			ret.add(getProfileNotNull(userManager, userName));
 		}
 		return ret;
 	}

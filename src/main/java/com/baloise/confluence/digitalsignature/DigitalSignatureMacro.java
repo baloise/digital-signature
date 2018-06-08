@@ -143,7 +143,7 @@ public class DigitalSignatureMacro implements Macro {
 			context.put("profiles",  contextHelper.union(signed, missing));
 			
 			if(signature.isSignatureMissing(currentUserName)) {
-				context.put("signAs", userManager.getUserProfile(currentUserName).getFullName());
+				context.put("signAs", contextHelper.getProfileNotNull(userManager, currentUserName).getFullName());
 				context.put("signAction",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/sign");
 			}
 			context.put("panel",  getBoolean(params, "panel", true));

@@ -118,7 +118,7 @@ public class DigitalSigatureService {
 	
 	private void notify(final String notifiedUser, ConfluenceUser signedUser, final Signature signature, final String baseUrl) {
 		try {
-			UserProfile notifiedUserProfile = userManager.getUserProfile(notifiedUser);
+			UserProfile notifiedUserProfile = contextHelper.getProfileNotNull(userManager, notifiedUser);
 			
 			String user = format("<a href='%s'>%s</a>",
 					baseUrl+ "/display/~"+signedUser.getName(),
@@ -146,8 +146,8 @@ public class DigitalSigatureService {
 			
 			if(mailServer== null) {
 				log.warn("No default SMTP server found -> no signature notification sent.");
-			} else if(notifiedUserProfile.getEmail() == null && notifiedUserProfile.getEmail().trim().isEmpty()) {
-				log.warn(notifiedUserProfile.getUsername()+" is to be notified but has no email address. Skipping email notification");
+			} else if(!hasEmail(notifiedUserProfile)) {
+				log.warn(notifiedUser +" is to be notified but has no email address. Skipping email notification");
 			} else {
 				mailServer.send(
 						new Email(notifiedUserProfile.getEmail())
@@ -165,6 +165,10 @@ public class DigitalSigatureService {
 		} catch (ExecutionException e) {
 			log.error("Could not send notification to "+notifiedUser, e);
 		}
+	}
+
+	public boolean hasEmail(UserProfile profile) {
+		return profile != null && profile.getEmail() != null && !profile.getEmail().trim().isEmpty();
 	}
 
 	
@@ -209,7 +213,9 @@ public class DigitalSigatureService {
 		context.put("toggleWithNamesURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("emailOnly", !emailOnly).build());
 		context.put("toggleSignedURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("signed", !signed).build());
 		Function<UserProfile, String> mapping = p -> (emailOnly ? p.getEmail() : contextHelper.mailTo(p)).trim();
-		context.put("emails", profiles.values().stream().map(mapping).collect(toList()));
+		context.put("emails", profiles.values().stream()
+				.filter(this::hasEmail)
+				.map(mapping).collect(toList()));
 		
 		context.put("currentDate", new Date());
 		context.put("date", new DateTool());
