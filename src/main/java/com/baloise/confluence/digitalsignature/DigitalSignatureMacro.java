@@ -7,6 +7,7 @@ import static com.atlassian.confluence.security.ContentPermission.createUserPerm
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -295,6 +296,9 @@ public class DigitalSignatureMacro implements Macro {
 
 	String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
 		 if(profiles ==  null || profiles.isEmpty()) return null;
+		 profiles = profiles.stream()
+			.filter(contextHelper::hasEmail)
+			.collect(toList());
 		 StringBuilder ret = new StringBuilder("mailto:");
 		 for (UserProfile profile : profiles) {
 			if(ret.length()>7) ret.append(',');

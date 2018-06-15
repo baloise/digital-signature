@@ -69,5 +69,8 @@ public class ContextHelper {
 	public String mailTo(UserProfile profile) {
 		return format("%s<%s>", profile.getFullName().trim(), profile.getEmail().trim());
 	}
+	public boolean hasEmail(UserProfile profile) {
+		return profile != null && profile.getEmail() != null && !profile.getEmail().trim().isEmpty();
+	}
 	
 }

@@ -146,7 +146,7 @@ public class DigitalSigatureService {
 			
 			if(mailServer== null) {
 				log.warn("No default SMTP server found -> no signature notification sent.");
-			} else if(!hasEmail(notifiedUserProfile)) {
+			} else if(!contextHelper.hasEmail(notifiedUserProfile)) {
 				log.warn(notifiedUser +" is to be notified but has no email address. Skipping email notification");
 			} else {
 				mailServer.send(
@@ -167,9 +167,6 @@ public class DigitalSigatureService {
 		}
 	}
 
-	public boolean hasEmail(UserProfile profile) {
-		return profile != null && profile.getEmail() != null && !profile.getEmail().trim().isEmpty();
-	}
 
 	
 	@GET
@@ -214,7 +211,7 @@ public class DigitalSigatureService {
 		context.put("toggleSignedURL",  uriInfo.getRequestUriBuilder().replaceQueryParam("signed", !signed).build());
 		Function<UserProfile, String> mapping = p -> (emailOnly ? p.getEmail() : contextHelper.mailTo(p)).trim();
 		context.put("emails", profiles.values().stream()
-				.filter(this::hasEmail)
+				.filter(contextHelper::hasEmail)
 				.map(mapping).collect(toList()));
 		
 		context.put("currentDate", new Date());
