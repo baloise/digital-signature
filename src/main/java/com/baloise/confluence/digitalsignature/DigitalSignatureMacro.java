@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
+import com.atlassian.confluence.core.ContentEntityObject;
 import com.atlassian.confluence.core.DefaultSaveContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
@@ -94,9 +95,9 @@ public class DigitalSignatureMacro implements Macro {
 					loadUserGroups(userGroups),
 					loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
 					);
-			Page page = (Page) conversionContext.getEntity();
+			ContentEntityObject entity =  conversionContext.getEntity();
 			Signature signature = sync(new Signature(
-					page.getLatestVersionId(), 
+					entity.getLatestVersionId(), 
 					body, 
 					params.get("title"))
 					.withNotified(getSet(params, "notified"))
@@ -106,11 +107,12 @@ public class DigitalSignatureMacro implements Macro {
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
 			String currentUserName = currentUser.getName();
 			boolean protectedContent = getBoolean(params, "protectedContent", false);
-			boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, page) ||signature.hasSigned(currentUserName));
+			boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, entity) ||signature.hasSigned(currentUserName));
 			
-			if(protectedContent) {
+			if(protectedContent && isPage(conversionContext)) {
 				Page protectedPage = pageManager.getPage(conversionContext.getSpaceKey(), signature.getProtectedKey());
 				if(protectedPage == null) {
+					Page page =  (Page) entity;
 					ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
 					if(editors == null || editors.size() == 0) {
 						return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.editPermissionRequiredForProtectedContent" ,"<a class=\"system-metadata-restrictions\">","</a>"));
@@ -149,7 +151,8 @@ public class DigitalSignatureMacro implements Macro {
 			}
 			context.put("panel",  getBoolean(params, "panel", true));
 			context.put("protectedContent",  protectedContentAccess);
-			if(protectedContentAccess) {
+			if(protectedContentAccess && isPage(conversionContext)) {
+				Page page =  (Page) entity;
 				context.put("protectedContentURL",  bootstrapManager.getWebAppContextPath()+ DISPLAY_PATH+"/"+page.getSpaceKey()+"/"+signature.getProtectedKey());
 			}
 			context.put("mailtoSigned",  getMailto(signed.values(), signature.getTitle(), true, signature));
@@ -161,6 +164,10 @@ public class DigitalSignatureMacro implements Macro {
 		return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
 		
 		
+	}
+
+	private boolean isPage(ConversionContext conversionContext) {
+		return  conversionContext.getEntity()instanceof Page;
 	}
 
 	private String warning(String message) {
