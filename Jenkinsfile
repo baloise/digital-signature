@@ -28,7 +28,6 @@ pipeline {
         stage("Maven") {
             steps {
                     mavenbuild
-                }
             }
         }
     }
