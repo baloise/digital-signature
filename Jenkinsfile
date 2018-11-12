@@ -31,14 +31,14 @@ pipeline {
 
         stage("Maven") {
             steps {
-                mvn "clean verify dependency:copy-dependencies"
+                mvn "clean verify"
             }
         }
         
         stage("Nexus Lifecycle") {
             steps {
                 nexusPolicyEvaluation iqApplication: 'com.baloise.confluence.digital-signature', 
-                                  iqScanPatterns: [[scanPattern: 'target/dependency/*.jar']], 
+                                  iqScanPatterns: [[scanPattern: 'target/*.jar']], 
                                   iqStage: 'build'
             }
         }
