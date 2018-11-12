@@ -31,7 +31,7 @@ pipeline {
 
         stage("Maven") {
             steps {
-                mvn "clean dependency:copy-dependencies"
+                mvn "clean verify dependency:copy-dependencies"
             }
         }
         
