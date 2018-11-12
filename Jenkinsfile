@@ -1,3 +1,7 @@
+library identifier: 'WorkflowLibsShared@master', retriever: modernSCM(
+  [$class: 'GitSCMSource', remote: 'https://git.balgroupit.com/CICD-DevOps/WorkflowLibsShared.git']
+)
+
 pipeline {
     agent {
         label 'common'
@@ -27,7 +31,7 @@ pipeline {
 
         stage("Maven") {
             steps {
-                mavenbuild()
+                mvn "clean verify"
             }
         }
     }
