@@ -47,7 +47,7 @@
             <artifactId>confluence</artifactId>
             <version>${confluence.version}</version>
             <scope>provided</scope>
-        </dependency>
+       </dependency>
 
         <dependency>
             <groupId>com.atlassian.mywork</groupId>
@@ -168,6 +168,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <repositories>
@@ -182,7 +183,7 @@
                 <checksumPolicy>warn</checksumPolicy>
             </snapshots>
             <id>atlassian-public</id>
-            <url>https://maven.atlassian.com/repository/public</url>
+            <url>https://packages.atlassian.com/mvn/maven-external/</url>
         </repository>
     </repositories>
     <pluginRepositories>
@@ -197,7 +198,7 @@
                 <checksumPolicy>warn</checksumPolicy>
             </snapshots>
             <id>atlassian-public</id>
-            <url>https://maven.atlassian.com/repository/public</url>
+            <url>https://packages.atlassian.com/mvn/maven-external/</url>
         </pluginRepository>
     </pluginRepositories>
 
