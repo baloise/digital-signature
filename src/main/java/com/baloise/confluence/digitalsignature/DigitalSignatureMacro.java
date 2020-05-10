@@ -7,6 +7,8 @@ import static com.atlassian.confluence.security.ContentPermission.createUserPerm
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 
 import java.io.UnsupportedEncodingException;
@@ -106,6 +108,7 @@ public class DigitalSignatureMacro implements Macro {
 					);
 			ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
 			String currentUserName = currentUser.getName();
+			
 			boolean protectedContent = getBoolean(params, "protectedContent", false);
 			boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, entity) ||signature.hasSigned(currentUserName));
 			
@@ -136,14 +139,8 @@ public class DigitalSignatureMacro implements Macro {
 			}
 			
 			Map<String,Object> context = defaultVelocityContext();
-			context.put("signature",  signature);
 			context.put("date", new DateTool());
 			context.put("markdown", markdown);
-			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
-			Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
-			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
-			context.put("orderedMissingSignatureProfiles",  contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
-			context.put("profiles",  contextHelper.union(signed, missing));
 			
 			if(signature.isSignatureMissing(currentUserName)) {
 				context.put("signAs", contextHelper.getProfileNotNull(userManager, currentUserName).getFullName());
@@ -155,15 +152,60 @@ public class DigitalSignatureMacro implements Macro {
 				Page page =  (Page) entity;
 				context.put("protectedContentURL",  bootstrapManager.getWebAppContextPath()+ DISPLAY_PATH+"/"+page.getSpaceKey()+"/"+signature.getProtectedKey());
 			}
+			
+			boolean canExport = hideSignatures(params, signature, currentUserName);
+			Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
+			Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
+			
+			context.put("orderedSignatures",  contextHelper.getOrderedSignatures(signature));
+			context.put("orderedMissingSignatureProfiles",  contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
+			context.put("profiles",  contextHelper.union(signed, missing));
+			context.put("signature",  signature);
 			context.put("mailtoSigned",  getMailto(signed.values(), signature.getTitle(), true, signature));
 			context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle(), false, signature));
 		    context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
-		    context.put("downloadURL",  	bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey());
+		    context.put("downloadURL", canExport ? bootstrapManager.getWebAppContextPath()+ REST_PATH+"/export?key="+signature.getKey() : null);
 		    return getRenderedTemplate("templates/macro.vm", context);
 		}
 		return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
 		
 		
+	}
+
+	private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {
+		boolean pendingVisible = true;
+		boolean signaturesVisible = true;
+		switch (SignaturesVisible.ofValue(params.get("pendingVisible"))) {
+			case IF_SIGNATORY:
+				if(!signature.hasSigned(currentUserName) && !signature.isSignatory(currentUserName)) {
+					pendingVisible = false;
+				}
+				break;
+			case IF_SIGNED:
+				if(!signature.hasSigned(currentUserName)) {
+					pendingVisible = false;
+				}
+				break;
+			case ALWAYS:
+				break;
+		}
+		switch (SignaturesVisible.ofValue(params.get("signaturesVisible"))) {
+			case IF_SIGNATORY:
+				if(!signature.hasSigned(currentUserName) && !signature.isSignatory(currentUserName)) {
+					signaturesVisible = false;
+				}
+				break;
+			case IF_SIGNED:
+				if(!signature.hasSigned(currentUserName)) {
+					signaturesVisible = false;
+				}
+				break;
+			case ALWAYS:
+				break;
+		}
+		if(!pendingVisible) signature.setMissingSignatures(emptySet());
+		if(!signaturesVisible) signature.setSignatures(emptyMap());
+		return pendingVisible && signaturesVisible;
 	}
 
 	private boolean isPage(ConversionContext conversionContext) {

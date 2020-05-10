@@ -18,7 +18,7 @@ public class MarkdownTest {
 	Markdown markdown;
 
 	@Before
-	public void setup() {
+	public void setUp() {
 		markdown = new Markdown();
 	}
 	
