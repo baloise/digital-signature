@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.baloise.confluence</groupId>
     <artifactId>digital-signature</artifactId>
-    <version>7.0.0</version>
+    <version>7.0.1</version>
 
     <organization>
         <name>Baloise</name>
@@ -102,6 +102,12 @@
             <artifactId>gson</artifactId>
             <version>2.2.2-atlassian-1</version>
         </dependency>
+        <dependency>
+        	<groupId>org.mockito</groupId>
+        	<artifactId>mockito-all</artifactId>
+        	<version>1.9.0</version>
+        	<scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -114,7 +120,7 @@
                 <configuration>
                     <productVersion>${confluence.version}</productVersion>
                     <productDataVersion>${confluence.data.version}</productDataVersion>
-                    <enableQuickReload>true</enableQuickReload>
+                    <enableQuickReload>false</enableQuickReload>
                     <instructions>
                         <Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
                         <!-- Add package to export here -->
@@ -123,6 +129,9 @@
                         <Import-Package>
                             org.springframework.osgi.*;resolution:="optional",
                             org.eclipse.gemini.blueprint.*;resolution:="optional",
+                            com.sun.mail.imap,
+                            com.sun.mail.smtp,
+                            com.sun.mail.pop3,
                             *
                         </Import-Package>
 
@@ -158,9 +167,9 @@
     </build>
 
     <properties>
-        <confluence.version>6.14.0</confluence.version>
-        <confluence.data.version>6.14.0</confluence.data.version>
-        <amps.version>8.0.2</amps.version>
+        <confluence.version>7.4.0</confluence.version>
+        <confluence.data.version>7.4.0</confluence.data.version>
+        <amps.version>8.1.0</amps.version>
         <plugin.testrunner.version>2.0.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
         <!-- This property ensures consistency between the key in atlassian-plugin.xml and the OSGi bundle's key. -->
@@ -169,6 +178,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.javadoc.skip>true</maven.javadoc.skip>
+        <allow.google.tracking>false</allow.google.tracking>
     </properties>
 
     <repositories>
