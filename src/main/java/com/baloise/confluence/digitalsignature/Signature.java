@@ -1,6 +1,6 @@
 package com.baloise.confluence.digitalsignature;
 
-import static org.apache.commons.codec.digest.DigestUtils.*;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -149,8 +149,13 @@ public class Signature implements Serializable {
 		return maxSignatures > -1 && maxSignatures <= getSignatures().size();
 	}
 	public boolean isSignatureMissing(String userName) {
-		return !isMaxSignaturesReached() && !hasSigned(userName)  && (isPetitionMode() || getMissingSignatures().contains(userName));
+		return !isMaxSignaturesReached() && !hasSigned(userName)  && isSignatory(userName);
 	}
+	
+	public boolean isSignatory(String userName) {
+		return isPetitionMode() || getMissingSignatures().contains(userName);
+	}
+	
 	public boolean hasMissingSignatures() {
 		return !isMaxSignaturesReached() && (isPetitionMode() || !getMissingSignatures().isEmpty());
 	}

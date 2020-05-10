@@ -7,7 +7,9 @@
 			#if($protectedContent)
 		    	<a class="aui-icon aui-icon-small aui-iconfont-attachment" href="$protectedContentURL" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label")" style="margin-right:20px;">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label")</a>
 		    #end
-			<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")</a>
+		    #if($downloadURL)
+				<a class="aui-icon aui-icon-small aui-iconfont-file-pdf" style="float:right;" href="$downloadURL" target="document" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.export.label")</a>
+			#end
 			#if($mailtoSigned || $mailtoMissing)
 				<a class="aui-icon aui-icon-small aui-iconfont-email aui-dropdown2-trigger" aria-haspopup="true" aria-owns="area$UUID" href="#area$UUID" title="$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.label")">$i18n.getText("com.baloise.confluence.digital-signature.signature.macro.panel.email.label")</a>
 				<div id="area$UUID" class="aui-dropdown2 aui-style-default">

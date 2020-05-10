@@ -47,6 +47,16 @@
 			<parameter name="notified" multiple="true" type="username" required="false"/>
 			<parameter name="panel" type="boolean" required="true" default="true" />
 			<parameter name="protectedContent" type="boolean" required="true" default="false" />
+			<parameter name="signaturesVisible" multiple="false" type="enum" required="true" default="always">
+				<value name="always"/>
+				<value name="if signatory"/>
+				<value name="if signed"/>
+			</parameter>
+			<parameter name="pendingVisible" multiple="false" type="enum" required="true" default="always">
+				<value name="always"/>
+				<value name="if signatory"/>
+				<value name="if signed"/>
+			</parameter>
 		</parameters>
 	</xhtml-macro>
 	
