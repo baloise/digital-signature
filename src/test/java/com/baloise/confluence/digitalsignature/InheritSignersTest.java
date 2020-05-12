@@ -7,17 +7,17 @@ import static org.junit.Assert.assertEquals;
 
 public class InheritSignersTest {
     @Test
-    public void testOfValue_READERS_ONLY() {
+    public void testOfValueReadersOnly() {
         assertEquals(READERS_ONLY, ofValue("readers only"));
     }
 
     @Test
-    public void testOfValue_NONE_NULL() {
+    public void testOfValueNoneNull() {
         assertEquals(NONE, ofValue(null));
     }
 
     @Test
-    public void testOfValue_NONE_IllegalArgument() {
+    public void testOfValueNoneIllegalArgument() {
         assertEquals(NONE, ofValue("asdasd"));
     }
 }

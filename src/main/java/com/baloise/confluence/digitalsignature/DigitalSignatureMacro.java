@@ -24,6 +24,7 @@ import com.atlassian.user.Group;
 import com.atlassian.user.GroupManager;
 import com.atlassian.user.search.page.Pager;
 import org.apache.velocity.tools.generic.DateTool;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.UnsupportedEncodingException;
@@ -32,7 +33,9 @@ import java.security.InvalidParameterException;
 import java.util.*;
 
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
-import static com.atlassian.confluence.security.ContentPermission.*;
+import static com.atlassian.confluence.security.ContentPermission.EDIT_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static java.util.Arrays.asList;
@@ -78,86 +81,98 @@ public class DigitalSignatureMacro implements Macro {
 
     @Override
     public String execute(Map<String, String> params, String body, ConversionContext conversionContext) {
-        if (body != null && body.length() > 10) {
-            Set<String> userGroups = getSet(params, "signerGroups");
-            boolean petitionMode = Signature.isPetitionMode(userGroups);
-            @SuppressWarnings("unchecked")
-            Set<String> signers = petitionMode ? all : contextHelper.union(
-                    getSet(params, "signers"),
-                    loadUserGroups(userGroups),
-                    loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
-            );
-            ContentEntityObject entity = conversionContext.getEntity();
-            Signature signature = sync(new Signature(
-                            entity.getLatestVersionId(),
-                            body,
-                            params.get("title"))
-                                               .withNotified(getSet(params, "notified"))
-                                               .withMaxSignatures(getLong(params, "maxSignatures", -1)),
-                    signers
-            );
-            ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
-            String currentUserName = currentUser.getName();
-
-            boolean protectedContent = getBoolean(params, "protectedContent", false);
-            boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, entity) || signature.hasSigned(currentUserName));
-
-            if (protectedContent && isPage(conversionContext)) {
-                Page protectedPage = pageManager.getPage(conversionContext.getSpaceKey(), signature.getProtectedKey());
-                if (protectedPage == null) {
-                    Page page = (Page) entity;
-                    ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
-                    if (editors == null || editors.size() == 0) {
-                        return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.editPermissionRequiredForProtectedContent", "<a class=\"system-metadata-restrictions\">", "</a>"));
-                    }
-                    protectedPage = new Page();
-                    protectedPage.setSpace(page.getSpace());
-                    protectedPage.setParentPage(page);
-                    protectedPage.setVersion(1);
-                    protectedPage.setCreator(page.getCreator());
-                    for (ContentPermission editor : editors) {
-                        protectedPage.addPermission(createUserPermission(EDIT_PERMISSION, editor.getUserSubject()));
-                        protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, editor.getUserSubject()));
-                    }
-                    for (String signedUserName : signature.getSignatures().keySet()) {
-                        protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, signedUserName));
-                    }
-                    protectedPage.setTitle(signature.getProtectedKey());
-                    pageManager.saveContentEntity(protectedPage, DefaultSaveContext.DEFAULT);
-                    page.addChild(protectedPage);
-                }
-            }
-
-            Map<String, Object> context = defaultVelocityContext();
-            context.put("date", new DateTool());
-            context.put("markdown", markdown);
-
-            if (signature.isSignatureMissing(currentUserName)) {
-                context.put("signAs", contextHelper.getProfileNotNull(userManager, currentUserName).getFullName());
-                context.put("signAction", bootstrapManager.getWebAppContextPath() + REST_PATH + "/sign");
-            }
-            context.put("panel", getBoolean(params, "panel", true));
-            context.put("protectedContent", protectedContentAccess);
-            if (protectedContentAccess && isPage(conversionContext)) {
-                Page page = (Page) entity;
-                context.put("protectedContentURL", bootstrapManager.getWebAppContextPath() + DISPLAY_PATH + "/" + page.getSpaceKey() + "/" + signature.getProtectedKey());
-            }
-
-            boolean canExport = hideSignatures(params, signature, currentUserName);
-            Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
-            Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
-
-            context.put("orderedSignatures", contextHelper.getOrderedSignatures(signature));
-            context.put("orderedMissingSignatureProfiles", contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
-            context.put("profiles", contextHelper.union(signed, missing));
-            context.put("signature", signature);
-            context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle(), true, signature));
-            context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle(), false, signature));
-            context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
-            context.put("downloadURL", canExport ? bootstrapManager.getWebAppContextPath() + REST_PATH + "/export?key=" + signature.getKey() : null);
-            return getRenderedTemplate("templates/macro.vm", context);
+        if (body == null || body.length() <= 10) {
+            return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
         }
-        return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
+
+        Set<String> userGroups = getSet(params, "signerGroups");
+        boolean petitionMode = Signature.isPetitionMode(userGroups);
+        @SuppressWarnings("unchecked")
+        Set<String> signers = petitionMode ? all : contextHelper.union(
+                getSet(params, "signers"),
+                loadUserGroups(userGroups),
+                loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext)
+        );
+        ContentEntityObject entity = conversionContext.getEntity();
+        Signature signature = sync(new Signature(
+                        entity.getLatestVersionId(),
+                        body,
+                        params.get("title"))
+                                           .withNotified(getSet(params, "notified"))
+                                           .withMaxSignatures(getLong(params, "maxSignatures", -1)),
+                signers
+        );
+
+        boolean protectedContent = getBoolean(params, "protectedContent", false);
+        if (protectedContent && isPage(conversionContext)) {
+            try {
+                ensureProtectedPage(conversionContext, (Page) entity, signature);
+            } catch (Exception e) {
+                return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.editPermissionRequiredForProtectedContent", "<a class=\"system-metadata-restrictions\">", "</a>"));
+            }
+        }
+
+        return getRenderedTemplate("templates/macro.vm", buildContext(params, conversionContext, entity, signature, protectedContent));
+    }
+
+    @NotNull
+    private Map<String, Object> buildContext(Map<String, String> params, ConversionContext conversionContext, ContentEntityObject page, Signature signature, boolean protectedContent) {
+        ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
+        String currentUserName = currentUser.getName();
+        boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, page) || signature.hasSigned(currentUserName));
+
+        Map<String, Object> context = defaultVelocityContext();
+        context.put("date", new DateTool());
+        context.put("markdown", markdown);
+
+        if (signature.isSignatureMissing(currentUserName)) {
+            context.put("signAs", contextHelper.getProfileNotNull(userManager, currentUserName).getFullName());
+            context.put("signAction", bootstrapManager.getWebAppContextPath() + REST_PATH + "/sign");
+        }
+        context.put("panel", getBoolean(params, "panel", true));
+        context.put("protectedContent", protectedContentAccess);
+        if (protectedContentAccess && isPage(conversionContext)) {
+            context.put("protectedContentURL", bootstrapManager.getWebAppContextPath() + DISPLAY_PATH + "/" + ((Page) page).getSpaceKey() + "/" + signature.getProtectedKey());
+        }
+
+        boolean canExport = hideSignatures(params, signature, currentUserName);
+        Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
+        Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
+
+        context.put("orderedSignatures", contextHelper.getOrderedSignatures(signature));
+        context.put("orderedMissingSignatureProfiles", contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
+        context.put("profiles", contextHelper.union(signed, missing));
+        context.put("signature", signature);
+        context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle(), true, signature));
+        context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle(), false, signature));
+        context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
+        context.put("downloadURL", canExport ? bootstrapManager.getWebAppContextPath() + REST_PATH + "/export?key=" + signature.getKey() : null);
+        return context;
+    }
+
+    private void ensureProtectedPage(ConversionContext conversionContext, Page page, Signature signature) {
+        Page protectedPage = pageManager.getPage(conversionContext.getSpaceKey(), signature.getProtectedKey());
+        if (protectedPage == null) {
+            ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
+            if (editors == null || editors.size() == 0) {
+                throw new IllegalStateException("No editors found!");
+            }
+            protectedPage = new Page();
+            protectedPage.setSpace(page.getSpace());
+            protectedPage.setParentPage(page);
+            protectedPage.setVersion(1);
+            protectedPage.setCreator(page.getCreator());
+            for (ContentPermission editor : editors) {
+                protectedPage.addPermission(createUserPermission(EDIT_PERMISSION, editor.getUserSubject()));
+                protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, editor.getUserSubject()));
+            }
+            for (String signedUserName : signature.getSignatures().keySet()) {
+                protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, signedUserName));
+            }
+            protectedPage.setTitle(signature.getProtectedKey());
+            pageManager.saveContentEntity(protectedPage, DefaultSaveContext.DEFAULT);
+            page.addChild(protectedPage);
+        }
     }
 
     private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {

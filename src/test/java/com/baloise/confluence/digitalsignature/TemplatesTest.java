@@ -28,7 +28,7 @@ public class TemplatesTest {
         mergeTemplate("src/main/resources/templates/macro.vm", "UTF-8", context, writer);
         writer.flush();
         String result = sw.toString();
-        assertEquals("<b>$title</b><p>$bodyWithHtml</p><ul style=\"list-style-type: none;\"></ul>", normalize(result));
+        assertEquals("<b>$title</b><p>$bodyWithHtml</p><ul class=\"body-list\"></ul>", normalize(result));
     }
 
     @Test
