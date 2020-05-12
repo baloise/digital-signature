@@ -21,7 +21,7 @@ public class DigitalSignatureMacroTest {
     @Test
     public void getMailtoLong() {
         DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, null, null, null, null, null);
-        List<UserProfile> profiles = new ArrayList<UserProfile>();
+        List<UserProfile> profiles = new ArrayList<>();
         UserProfile profile = Mockito.mock(UserProfile.class);
         when(profile.getFullName()).thenReturn("Heinz Meier");
         when(profile.getEmail()).thenReturn("heinz.meier@meier.com");
@@ -37,7 +37,7 @@ public class DigitalSignatureMacroTest {
         Mockito.when(bootstrapManager.getWebAppContextPath()).thenReturn("nirvana");
 
         DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, bootstrapManager, null, null, null, null);
-        List<UserProfile> profiles = new ArrayList<UserProfile>();
+        List<UserProfile> profiles = new ArrayList<>();
         UserProfile profile = Mockito.mock(UserProfile.class);
         when(profile.getFullName()).thenReturn("Heinz Meier");
         when(profile.getEmail()).thenReturn("heinz.meier@meier.com");
@@ -51,7 +51,7 @@ public class DigitalSignatureMacroTest {
     @Test
     public void getMailtoShort() {
         DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, null, null, null, null, null);
-        List<UserProfile> profiles = new ArrayList<UserProfile>();
+        List<UserProfile> profiles = new ArrayList<>();
         UserProfile profile = Mockito.mock(UserProfile.class);
         when(profile.getFullName()).thenReturn("Heinz Meier");
         when(profile.getEmail()).thenReturn("heinz.meier@meier.com");

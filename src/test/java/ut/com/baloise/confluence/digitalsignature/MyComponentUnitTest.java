@@ -6,12 +6,10 @@ import com.baloise.confluence.digitalsignature.impl.DigitalSignatureComponentImp
 
 import static org.junit.Assert.assertEquals;
 
-public class MyComponentUnitTest
-{
+public class MyComponentUnitTest {
     @Test
-    public void testMyName()
-    {
+    public void testMyName() {
         DigitalSignatureComponent component = new DigitalSignatureComponentImpl(null);
-        assertEquals("names do not match!", "digitalSignatureComponent",component.getName());
+        assertEquals("names do not match!", "digitalSignatureComponent", component.getName());
     }
 }

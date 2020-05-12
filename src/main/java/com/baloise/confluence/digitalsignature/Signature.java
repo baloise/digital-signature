@@ -15,9 +15,9 @@ public class Signature implements Serializable {
     private String title = "";
     private String body = "";
     private long maxSignatures = -1;
-    private Map<String, Date> signatures = new HashMap<String, Date>();
-    private Set<String> missingSignatures = new TreeSet<String>();
-    private Set<String> notified = new TreeSet<String>();
+    private Map<String, Date> signatures = new HashMap<>();
+    private Set<String> missingSignatures = new TreeSet<>();
+    private Set<String> notified = new TreeSet<>();
 
     public Signature() {
     }
@@ -28,6 +28,10 @@ public class Signature implements Serializable {
         this.title = title == null ? "" : title;
         hash = sha256Hex(pageId + ":" + title + ":" + body);
         key = "signature." + hash;
+    }
+
+    public static boolean isPetitionMode(Set<String> userGroups) {
+        return userGroups != null && userGroups.size() == 1 && userGroups.iterator().next().trim().equals("*");
     }
 
     public String getHash() {
@@ -45,12 +49,12 @@ public class Signature implements Serializable {
         return key;
     }
 
-    public String getProtectedKey() {
-        return "protected." + getHash();
-    }
-
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public String getProtectedKey() {
+        return "protected." + getHash();
     }
 
     public long getPageId() {
@@ -127,11 +131,8 @@ public class Signature implements Serializable {
             return false;
         Signature other = (Signature) obj;
         if (key == null) {
-            if (other.key != null)
-                return false;
-        } else if (!key.equals(other.key))
-            return false;
-        return true;
+            return other.key == null;
+        } else return key.equals(other.key);
     }
 
     public Signature withNotified(Set<String> notified) {
@@ -150,10 +151,6 @@ public class Signature implements Serializable {
 
     public boolean isPetitionMode() {
         return isPetitionMode(getMissingSignatures());
-    }
-
-    public static boolean isPetitionMode(Set<String> userGroups) {
-        return userGroups != null && userGroups.size() == 1 && userGroups.iterator().next().trim().equals("*");
     }
 
     public boolean sign(String userName) {

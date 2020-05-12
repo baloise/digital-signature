@@ -1,6 +1,5 @@
 package com.baloise.confluence.digitalsignature;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.Test;
 
 import java.io.FileOutputStream;
@@ -13,7 +12,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SignatureSerialisationTest {
-
     @Test
     public void deserialise() throws IOException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(getClass().getResourceAsStream("/signature.ser"));
@@ -27,8 +25,7 @@ public class SignatureSerialisationTest {
     }
 
     @Test
-    @Ignore
-    public void serialise() throws IOException {
+    public void serialise() throws IOException, ClassNotFoundException {
         Signature signature = new Signature(123L, "body", "title");
         signature.getNotify().add("notify1");
         signature.getMissingSignatures().add("missing1");
@@ -37,6 +34,8 @@ public class SignatureSerialisationTest {
         ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("src/test/resources/signature.ser"));
         out.writeObject(signature);
         out.close();
-    }
 
+        ObjectInputStream in = new ObjectInputStream(this.getClass().getResourceAsStream("/signature.ser"));
+        assertEquals(signature, in.readObject());
+    }
 }

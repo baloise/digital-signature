@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 public class UserProfileByNameTest {
 
     @Test
-    public void testCompare() throws Exception {
+    public void testCompare() {
         UserProfile profile1 = Mockito.mock(UserProfile.class);
         when(profile1.getFullName()).thenReturn("Heinz Meier");
         when(profile1.getEmail()).thenReturn("heinz.meier@meier.com");
@@ -22,7 +22,7 @@ public class UserProfileByNameTest {
         when(profile2.getFullName()).thenReturn("Abraham Aebischer");
         when(profile2.getEmail()).thenReturn("Abraham Aebischer@meier.com");
         when(profile2.toString()).thenReturn("Abraham Aebischer");
-        SortedSet<UserProfile> profiles = new TreeSet<UserProfile>(new UserProfileByName());
+        SortedSet<UserProfile> profiles = new TreeSet<>(new UserProfileByName());
         profiles.add(profile1);
         profiles.add(profile2);
         profiles.add(profile1);

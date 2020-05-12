@@ -6,20 +6,18 @@ import static com.baloise.confluence.digitalsignature.InheritSigners.*;
 import static org.junit.Assert.assertEquals;
 
 public class InheritSignersTest {
-
     @Test
-    public void READERS_ONLY() throws Exception {
+    public void testOfValue_READERS_ONLY() {
         assertEquals(READERS_ONLY, ofValue("readers only"));
     }
 
     @Test
-    public void NONE_NULL() throws Exception {
+    public void testOfValue_NONE_NULL() {
         assertEquals(NONE, ofValue(null));
     }
 
     @Test
-    public void NONE_IllegalArgument() throws Exception {
+    public void testOfValue_NONE_IllegalArgument() {
         assertEquals(NONE, ofValue("asdasd"));
     }
-
 }

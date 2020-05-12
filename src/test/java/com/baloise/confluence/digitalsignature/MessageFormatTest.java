@@ -7,7 +7,6 @@ import java.text.MessageFormat;
 import static org.junit.Assert.*;
 
 public class MessageFormatTest {
-
     @Test
     public void test() {
         String rawTemplate = "Email addresses of users who {0}signed{1} {2}";
@@ -17,5 +16,4 @@ public class MessageFormatTest {
         actual = MessageFormat.format(rawTemplate, "<b>", "</b>", "#123");
         assertEquals("#123 was <b>signed</b>", actual);
     }
-
 }

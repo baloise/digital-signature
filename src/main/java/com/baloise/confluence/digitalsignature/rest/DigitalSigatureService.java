@@ -130,12 +130,12 @@ public class DigitalSigatureService {
             String titleText = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", signedUser.getFullName(), signature.getTitle());
 
             notificationService.createOrUpdate(notifiedUser, new NotificationBuilder()
-                    .application(PLUGIN_KEY) // a unique key that identifies your plugin
-                    .title(titleText)
-                    .itemTitle(titleText)
-                    .description(html)
-                    .groupingId(PLUGIN_KEY + "-signature") // a key to aggregate notifications
-                    .createNotification()).get();
+                                                                     .application(PLUGIN_KEY) // a unique key that identifies your plugin
+                                                                     .title(titleText)
+                                                                     .itemTitle(titleText)
+                                                                     .description(html)
+                                                                     .groupingId(PLUGIN_KEY + "-signature") // a key to aggregate notifications
+                                                                     .createNotification()).get();
 
             SMTPMailServer mailServer = mailServerManager.getDefaultSMTPMailServer();
 
@@ -151,17 +151,10 @@ public class DigitalSigatureService {
                                 .setMimeType("text/html")
                 );
             }
-        } catch (IllegalArgumentException e) {
-            log.error("Could not send notification to " + notifiedUser, e);
-        } catch (InterruptedException e) {
-            log.error("Could not send notification to " + notifiedUser, e);
-        } catch (MailException e) {
-            log.error("Could not send notification to " + notifiedUser, e);
-        } catch (ExecutionException e) {
+        } catch (IllegalArgumentException | InterruptedException | MailException | ExecutionException e) {
             log.error("Could not send notification to " + notifiedUser, e);
         }
     }
-
 
     @GET
     @Path("export")
@@ -170,15 +163,15 @@ public class DigitalSigatureService {
     public String export(@QueryParam("key") final String key) {
         Signature signature = (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
 
-        Map<String, Object> context = defaultVelocityContext();
-        context.put("signature", signature);
-        context.put("markdown", markdown);
         Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
         Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
+
+        Map<String, Object> context = defaultVelocityContext();
+        context.put("markdown", markdown);
         context.put("orderedSignatures", contextHelper.getOrderedSignatures(signature));
         context.put("orderedMissingSignatureProfiles", contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
         context.put("profiles", contextHelper.union(signed, missing));
-
+        context.put("signature", signature);
         context.put("currentDate", new Date());
         context.put("date", new DateTool());
 
@@ -196,8 +189,8 @@ public class DigitalSigatureService {
         context.put("signature", signature);
         String signatureText = format("<i>%s</i> ( %s )", signature.getTitle(), signature.getHash());
         String rawTemplate = signed ?
-                i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.signedUsersEmails") :
-                i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.unsignedUsersEmails");
+                                     i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.signedUsersEmails") :
+                                     i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.unsignedUsersEmails");
         context.put("signedOrNotWithHtml", MessageFormat.format(rawTemplate, "<b>", "</b>", signatureText));
         context.put("withNamesChecked", emailOnly ? "" : "checked");
         context.put("signedChecked", signed ? "checked" : "");
@@ -205,12 +198,11 @@ public class DigitalSigatureService {
         context.put("toggleSignedURL", uriInfo.getRequestUriBuilder().replaceQueryParam("signed", !signed).build());
         Function<UserProfile, String> mapping = p -> (emailOnly ? p.getEmail() : contextHelper.mailTo(p)).trim();
         context.put("emails", profiles.values().stream()
-                .filter(contextHelper::hasEmail)
-                .map(mapping).collect(toList()));
+                                      .filter(contextHelper::hasEmail)
+                                      .map(mapping).collect(toList()));
 
         context.put("currentDate", new Date());
         context.put("date", new DateTool());
         return Response.ok(getRenderedTemplate("templates/email.vm", context)).build();
     }
-
 }

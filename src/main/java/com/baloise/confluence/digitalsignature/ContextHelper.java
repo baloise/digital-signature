@@ -6,33 +6,30 @@ import com.baloise.confluence.digitalsignature.sal.DummyProfile;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 
 public class ContextHelper {
     public Object getOrderedSignatures(Signature signature) {
-        Comparator<Entry<String, Date>> comparator = new Comparator<Entry<String, Date>>() {
-            @Override
-            public int compare(Entry<String, Date> s1, Entry<String, Date> s2) {
-                int ret = s1.getValue().compareTo(s2.getValue());
-                return ret == 0 ? s1.getKey().compareTo(s2.getKey()) : ret;
-            }
-        };
-        SortedSet<Entry<String, Date>> ret = new TreeSet<Map.Entry<String, Date>>(comparator);
+        SortedSet<Entry<String, Date>> ret = new TreeSet<>(Comparator.comparing((Function<Entry<String, Date>, Date>) Entry::getValue)
+                                                                     .thenComparing(Entry::getKey));
         ret.addAll(signature.getSignatures().entrySet());
         return ret;
     }
 
-    public <K, V> Map<K, V> union(Map<K, V>... maps) {
-        Map<K, V> union = new HashMap<K, V>();
+    @SafeVarargs
+    public final <K, V> Map<K, V> union(Map<K, V>... maps) {
+        Map<K, V> union = new HashMap<>();
         for (Map<K, V> map : maps) {
             union.putAll(map);
         }
         return union;
     }
 
-    public <K> Set<K> union(Set<K>... sets) {
-        Set<K> union = new HashSet<K>();
+    @SafeVarargs
+    public final <K> Set<K> union(Set<K>... sets) {
+        Set<K> union = new HashSet<>();
         for (Set<K> set : sets) {
             union.addAll(set);
         }
@@ -40,7 +37,7 @@ public class ContextHelper {
     }
 
     public Map<String, UserProfile> getProfiles(UserManager userManager, Set<String> userNames) {
-        Map<String, UserProfile> ret = new HashMap<String, UserProfile>();
+        Map<String, UserProfile> ret = new HashMap<>();
         if (Signature.isPetitionMode(userNames)) return ret;
         for (String userName : userNames) {
             ret.put(userName, getProfileNotNull(userManager, userName));
@@ -54,7 +51,7 @@ public class ContextHelper {
     }
 
     public SortedSet<UserProfile> getOrderedProfiles(UserManager userManager, Set<String> userNames) {
-        SortedSet<UserProfile> ret = new TreeSet<UserProfile>(new UserProfileByName());
+        SortedSet<UserProfile> ret = new TreeSet<>(new UserProfileByName());
         if (Signature.isPetitionMode(userNames)) return ret;
         for (String userName : userNames) {
             ret.add(getProfileNotNull(userManager, userName));
@@ -69,5 +66,4 @@ public class ContextHelper {
     public boolean hasEmail(UserProfile profile) {
         return profile != null && profile.getEmail() != null && !profile.getEmail().trim().isEmpty();
     }
-
 }

@@ -5,7 +5,6 @@ import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
 import com.atlassian.confluence.core.DefaultSaveContext;
 import com.atlassian.confluence.macro.Macro;
-import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.confluence.pages.Page;
 import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.security.ContentPermission;
@@ -29,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.InvalidParameterException;
 import java.util.*;
 
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
@@ -42,20 +42,19 @@ import static java.util.stream.Collectors.toList;
 
 @Scanned
 public class DigitalSignatureMacro implements Macro {
+    private final int MAX_MAILTO_CHARACTER_COUNT = 500;
+    private final String REST_PATH = "/rest/signature/1.0";
+    private final String DISPLAY_PATH = "/display";
+    private final transient Markdown markdown = new Markdown();
+    private final PermissionManager permissionManager;
+    private final Set<String> all = new HashSet<>();
     private BandanaManager bandanaManager;
     private UserManager userManager;
     private BootstrapManager bootstrapManager;
     private PageManager pageManager;
-    private final String REST_PATH = "/rest/signature/1.0";
-    private final String DISPLAY_PATH = "/display";
     private ContextHelper contextHelper = new ContextHelper();
-    private final transient Markdown markdown = new Markdown();
-    private final PermissionManager permissionManager;
     private GroupManager groupManager;
-    private final Set<String> all = new HashSet<String>();
-    final int MAX_MAILTO_CHARACTER_COUNT = 500;
     private I18nResolver i18nResolver;
-
 
     @Autowired
     public DigitalSignatureMacro(
@@ -78,7 +77,7 @@ public class DigitalSignatureMacro implements Macro {
     }
 
     @Override
-    public String execute(Map<String, String> params, String body, ConversionContext conversionContext) throws MacroExecutionException {
+    public String execute(Map<String, String> params, String body, ConversionContext conversionContext) {
         if (body != null && body.length() > 10) {
             Set<String> userGroups = getSet(params, "signerGroups");
             boolean petitionMode = Signature.isPetitionMode(userGroups);
@@ -93,8 +92,8 @@ public class DigitalSignatureMacro implements Macro {
                             entity.getLatestVersionId(),
                             body,
                             params.get("title"))
-                            .withNotified(getSet(params, "notified"))
-                            .withMaxSignatures(getLong(params, "maxSignatures", -1)),
+                                               .withNotified(getSet(params, "notified"))
+                                               .withMaxSignatures(getLong(params, "maxSignatures", -1)),
                     signers
             );
             ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
@@ -159,44 +158,27 @@ public class DigitalSignatureMacro implements Macro {
             return getRenderedTemplate("templates/macro.vm", context);
         }
         return warning(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.macro.warning.bodyToShort"));
-
-
     }
 
     private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {
-        boolean pendingVisible = true;
-        boolean signaturesVisible = true;
-        switch (SignaturesVisible.ofValue(params.get("pendingVisible"))) {
-            case IF_SIGNATORY:
-                if (!signature.hasSigned(currentUserName) && !signature.isSignatory(currentUserName)) {
-                    pendingVisible = false;
-                }
-                break;
-            case IF_SIGNED:
-                if (!signature.hasSigned(currentUserName)) {
-                    pendingVisible = false;
-                }
-                break;
-            case ALWAYS:
-                break;
-        }
-        switch (SignaturesVisible.ofValue(params.get("signaturesVisible"))) {
-            case IF_SIGNATORY:
-                if (!signature.hasSigned(currentUserName) && !signature.isSignatory(currentUserName)) {
-                    signaturesVisible = false;
-                }
-                break;
-            case IF_SIGNED:
-                if (!signature.hasSigned(currentUserName)) {
-                    signaturesVisible = false;
-                }
-                break;
-            case ALWAYS:
-                break;
-        }
+        boolean pendingVisible = isVisible(signature, currentUserName, params.get("pendingVisible"));
+        boolean signaturesVisible = isVisible(signature, currentUserName, params.get("signaturesVisible"));
         if (!pendingVisible) signature.setMissingSignatures(emptySet());
         if (!signaturesVisible) signature.setSignatures(emptyMap());
         return pendingVisible && signaturesVisible;
+    }
+
+    private boolean isVisible(Signature signature, String currentUserName, String signaturesVisibleParam) {
+        switch (SignaturesVisible.ofValue(signaturesVisibleParam)) {
+            case IF_SIGNATORY:
+                return signature.hasSigned(currentUserName) || signature.isSignatory(currentUserName);
+            case IF_SIGNED:
+                return signature.hasSigned(currentUserName);
+            case ALWAYS:
+                return true;
+            default:
+                throw new InvalidParameterException(String.format("'%s' is an unknown value of SignaturesVisible!", signaturesVisibleParam));
+        }
     }
 
     private boolean isPage(ConversionContext conversionContext) {
@@ -205,35 +187,37 @@ public class DigitalSignatureMacro implements Macro {
 
     private String warning(String message) {
         return "<div class=\"aui-message aui-message-warning\">\n" +
-                "    <p class=\"title\">\n" +
-                "        <strong>" + i18nResolver.getText("com.baloise.confluence.digital-signature.signature.label") + "</strong>\n" +
-                "    </p>\n" +
-                "    <p>" + message + "</p>\n" +
-                "</div>";
+                       "    <p class=\"title\">\n" +
+                       "        <strong>" + i18nResolver.getText("com.baloise.confluence.digital-signature.signature.label") + "</strong>\n" +
+                       "    </p>\n" +
+                       "    <p>" + message + "</p>\n" +
+                       "</div>";
     }
 
     private Set<String> loadInheritedSigners(InheritSigners inheritSigners, ConversionContext conversionContext) {
-        Set<String> users = new HashSet<String>();
+        Set<String> users = new HashSet<>();
         switch (inheritSigners) {
             case READERS_AND_WRITERS:
-                users.addAll(loadUsers(conversionContext, ContentPermission.VIEW_PERMISSION));
-                users.addAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+                users.addAll(loadUsers(conversionContext, VIEW_PERMISSION));
+                users.addAll(loadUsers(conversionContext, EDIT_PERMISSION));
                 break;
             case READERS_ONLY:
-                users.addAll(loadUsers(conversionContext, ContentPermission.VIEW_PERMISSION));
-                users.removeAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+                users.addAll(loadUsers(conversionContext, VIEW_PERMISSION));
+                users.removeAll(loadUsers(conversionContext, EDIT_PERMISSION));
                 break;
             case WRITERS_ONLY:
-                users.addAll(loadUsers(conversionContext, ContentPermission.EDIT_PERMISSION));
+                users.addAll(loadUsers(conversionContext, EDIT_PERMISSION));
                 break;
             case NONE:
                 break;
+            default:
+                throw new IllegalArgumentException(inheritSigners + " is unknown or not yet implemented!");
         }
         return users;
     }
 
     private Set<String> loadUsers(ConversionContext conversionContext, String permission) {
-        Set<String> users = new HashSet<String>();
+        Set<String> users = new HashSet<>();
         ContentPermissionSet contentPermissionSet = conversionContext.getEntity().getContentPermissionSet(permission);
         if (contentPermissionSet != null) {
             for (ContentPermission cp : contentPermissionSet) {
@@ -249,7 +233,7 @@ public class DigitalSignatureMacro implements Macro {
     }
 
     private Set<String> loadUserGroups(Iterable<String> groupNames) {
-        Set<String> ret = new HashSet<String>();
+        Set<String> ret = new HashSet<>();
         for (String groupName : groupNames) {
             ret.addAll(loadUserGroup(groupName));
         }
@@ -257,7 +241,7 @@ public class DigitalSignatureMacro implements Macro {
     }
 
     private Set<String> loadUserGroup(String groupName) {
-        Set<String> ret = new HashSet<String>();
+        Set<String> ret = new HashSet<>();
         try {
             if (groupName == null) return ret;
             Group group = groupManager.getGroup(groupName.trim());
@@ -281,12 +265,12 @@ public class DigitalSignatureMacro implements Macro {
 
     private long getLong(Map<String, String> params, String key, long fallback) {
         String value = params.get(key);
-        return value == null ? fallback : Long.valueOf(value);
+        return value == null ? fallback : Long.parseLong(value);
     }
 
     private Set<String> getSet(Map<String, String> params, String key) {
         String value = params.get(key);
-        return value == null || value.trim().isEmpty() ? new TreeSet<String>() : new TreeSet<String>(asList(value.split("[;, ]+")));
+        return value == null || value.trim().isEmpty() ? new TreeSet<>() : new TreeSet<>(asList(value.split("[;, ]+")));
     }
 
     private Signature sync(Signature signature, Set<String> signers) {
@@ -306,6 +290,7 @@ public class DigitalSignatureMacro implements Macro {
                 loaded.setMissingSignatures(signature.getMissingSignatures());
                 save = true;
             }
+
             if (loaded.getMaxSignatures() != signature.getMaxSignatures()) {
                 loaded.setMaxSignatures(signature.getMaxSignatures());
                 save = true;
@@ -337,14 +322,14 @@ public class DigitalSignatureMacro implements Macro {
     String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
         if (profiles == null || profiles.isEmpty()) return null;
         profiles = profiles.stream()
-                .filter(contextHelper::hasEmail)
-                .collect(toList());
+                           .filter(contextHelper::hasEmail)
+                           .collect(toList());
         StringBuilder ret = new StringBuilder("mailto:");
         for (UserProfile profile : profiles) {
             if (ret.length() > 7) ret.append(',');
             ret.append(contextHelper.mailTo(profile));
         }
-        ret.append("?Subject=" + urlEncode(subject));
+        ret.append("?Subject=").append(urlEncode(subject));
         if (ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
             ret.setLength(0);
             ret.append("mailto:");
@@ -352,7 +337,7 @@ public class DigitalSignatureMacro implements Macro {
                 if (ret.length() > 7) ret.append(',');
                 ret.append(profile.getEmail().trim());
             }
-            ret.append("?Subject=" + urlEncode(subject));
+            ret.append("?Subject=").append(urlEncode(subject));
         }
         if (ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
             return bootstrapManager.getWebAppContextPath() + REST_PATH + "/emails?key=" + signature.getKey() + "&signed=" + signed;
@@ -367,5 +352,4 @@ public class DigitalSignatureMacro implements Macro {
             throw new IllegalStateException(e);
         }
     }
-
 }

@@ -8,20 +8,15 @@ import java.net.URISyntaxException;
 
 import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Paths.get;
-import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.assertEquals;
 
-
 public class MarkdownTest {
-
-
-    Markdown markdown;
+    private Markdown markdown;
 
     @Before
     public void setUp() {
         markdown = new Markdown();
     }
-
 
     @Test
     public void testToHTML() throws Exception {
@@ -32,9 +27,7 @@ public class MarkdownTest {
         assertEquals(readResource("commonmark.html").trim(), markdown.toHTML(readResource("commonmark.md")).trim());
     }
 
-
     private String readResource(String name) throws IOException, URISyntaxException {
-        return readAllLines(get(getClass().getResource("/" + name).toURI())).stream().collect(joining("\n"));
+        return String.join("\n", readAllLines(get(getClass().getResource("/" + name).toURI())));
     }
-
 }
