@@ -31,7 +31,7 @@ public class SignatureSerialisationTest {
         signature.getMissingSignatures().add("missing1");
         signature.getMissingSignatures().add("missing2");
         signature.getSignatures().put("signed1", new Date(9999));
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("src/test/resources/signature.ser"));
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("src/test/resources/signature-test.ser"));
         out.writeObject(signature);
         out.close();
 
