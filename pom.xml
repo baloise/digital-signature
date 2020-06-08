@@ -128,6 +128,8 @@
                         <Export-Package>com.baloise.confluence.digitalsignature.api</Export-Package>
                         <!-- Add package import here -->
                         <Import-Package>
+                            org.springframework.osgi.*;resolution:="optional",
+                            org.eclipse.gemini.blueprint.*;resolution:="optional",
                             com.sun.mail.imap,
                             com.sun.mail.smtp,
                             com.sun.mail.pop3,
