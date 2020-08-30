@@ -99,7 +99,8 @@ public class DigitalSignatureMacro implements Macro {
                         body,
                         params.get("title"))
                                            .withNotified(getSet(params, "notified"))
-                                           .withMaxSignatures(getLong(params, "maxSignatures", -1)),
+                                           .withMaxSignatures(getLong(params, "maxSignatures", -1))
+                                           .withVisibilityLimit(getLong(params, "visibilityLimit", -1)),
                 signers
         );
 
@@ -143,6 +144,7 @@ public class DigitalSignatureMacro implements Macro {
         context.put("orderedMissingSignatureProfiles", contextHelper.getOrderedProfiles(userManager, signature.getMissingSignatures()));
         context.put("profiles", contextHelper.union(signed, missing));
         context.put("signature", signature);
+        context.put("visibilityLimit", signature.getVisibilityLimit());
         context.put("mailtoSigned", getMailto(signed.values(), signature.getTitle(), true, signature));
         context.put("mailtoMissing", getMailto(missing.values(), signature.getTitle(), false, signature));
         context.put("UUID", UUID.randomUUID().toString().replace("-", ""));
@@ -308,6 +310,11 @@ public class DigitalSignatureMacro implements Macro {
 
             if (loaded.getMaxSignatures() != signature.getMaxSignatures()) {
                 loaded.setMaxSignatures(signature.getMaxSignatures());
+                save = true;
+            }
+
+            if (loaded.getVisibilityLimit() != signature.getVisibilityLimit()) {
+                loaded.setVisibilityLimit(signature.getVisibilityLimit());
                 save = true;
             }
 

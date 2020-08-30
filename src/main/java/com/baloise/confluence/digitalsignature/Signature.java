@@ -15,6 +15,7 @@ public class Signature implements Serializable {
     private String title = "";
     private String body = "";
     private long maxSignatures = -1;
+    private long visibilityLimit = -1;
     private Map<String, Date> signatures = new HashMap<>();
     private Set<String> missingSignatures = new TreeSet<>();
     private Set<String> notified = new TreeSet<>();
@@ -89,6 +90,14 @@ public class Signature implements Serializable {
         this.missingSignatures = missingSignatures;
     }
 
+    public long getVisibilityLimit() {
+        return visibilityLimit;
+    }
+
+    public void setVisibilityLimit(long visibilityLimit) {
+        this.visibilityLimit = visibilityLimit;
+    }
+
     public long getMaxSignatures() {
         return maxSignatures;
     }
@@ -142,6 +151,11 @@ public class Signature implements Serializable {
 
     public Signature withMaxSignatures(long maxSignatures) {
         this.maxSignatures = maxSignatures;
+        return this;
+    }
+
+    public Signature withVisibilityLimit(long visibilityLimit) {
+        this.visibilityLimit = visibilityLimit;
         return this;
     }
 

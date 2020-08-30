@@ -5,8 +5,8 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 
 public class Markdown {
-    private Parser parser;
-    private HtmlRenderer renderer;
+    private final Parser parser;
+    private final HtmlRenderer renderer;
 
     public Markdown() {
         MutableDataSet options = new MutableDataSet();

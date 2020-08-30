@@ -27,8 +27,8 @@ public class TemplatesTest {
         //add your parameters to context
         mergeTemplate("src/main/resources/templates/macro.vm", "UTF-8", context, writer);
         writer.flush();
-        String result = sw.toString();
-        assertEquals("<b>$title</b><p>$bodyWithHtml</p><ul class=\"body-list\"></ul>", normalize(result));
+        String expected = "#requireResource(\"com.baloise.confluence.digital-signature:digital-signature-resources\") <b>$title</b><p>$bodyWithHtml</p><ul class=\"body-list signee-list\"></ul><script type=\"text/javascript\"> AJS.toInit(function() { bindCollapse(AJS.$(\"ul.body-list.signee-list\"), ${visibilityLimit}, '${i18n.getText( \"com.baloise.confluence.digital-signature.signature.macro.button.show-all.label\")}'); });</script>";
+        assertEquals(expected, normalize(sw.toString()));
     }
 
     @Test
@@ -40,9 +40,7 @@ public class TemplatesTest {
         //add your parameters to context
         mergeTemplate("src/main/resources/templates/export.vm", "UTF-8", context, writer);
         writer.flush();
-        String result = sw.toString();
-        assertEquals("<style type=\"text/css\"> body { padding: 2% 4% 2% 4%; } td { padding-right: 12px; }</style><h1>$signature.getTitle()</h1><p>$bodyWithHtml</p><table></table><!-- generated $dateFormatter.formatDateTime($currentDate) -->",
-                normalize(result));
+        String expected = "<style type=\"text/css\"> body { padding: 2% 4% 2% 4%; } td { padding-right: 12px; }</style><h1>$signature.getTitle()</h1><p>$bodyWithHtml</p><table></table><!-- generated $dateFormatter.formatDateTime($currentDate) -->";
+        assertEquals(expected, normalize(sw.toString()));
     }
-
 }

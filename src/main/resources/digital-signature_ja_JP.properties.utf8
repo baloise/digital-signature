@@ -15,6 +15,7 @@ com.baloise.confluence.digital-signature.signature.param.inheritSigners.none.des
 com.baloise.confluence.digital-signature.signature.param.inheritSigners.readers\ only.desc=読み取権限ユーザーだけ
 com.baloise.confluence.digital-signature.signature.param.inheritSigners.writers\ only.desc=編集権限ユーザーだけ
 com.baloise.confluence.digital-signature.signature.param.inheritSigners.readers\ and\ writers.desc=その双方権限ユーザー
+com.baloise.confluence.digital-signature.signature.param.visibilityLimit.label=表示される署名者の制限
 com.baloise.confluence.digital-signature.signature.param.maxSignatures.label=最多署名数
 com.baloise.confluence.digital-signature.signature.param.maxSignatures.desc=パネル上で認められる最多署名数。(既存署名の変更なしでの署名を無効にするには、0を記入してください。)
 com.baloise.confluence.digital-signature.signature.param.notified.label=通知されるユーザー
@@ -24,6 +25,7 @@ com.baloise.confluence.digital-signature.signature.param.panel.desc=署名され
 com.baloise.confluence.digital-signature.signature.param.protectedContent.label=保護された子ページを作成する
 com.baloise.confluence.digital-signature.signature.param.protectedContent.desc=現在ページの下に保護された子ページを作成します。現在ページの編集権限を有するユーザーが、これを閲覧および編集することができ、パネルを署名したユーザーが、これを閲覧することができます。保護された子ページはパネルと同じキーを使うため、パネルタイトルとテキストの入力を完了し、その後このオプションにチェックを入れてから、保護された子ページを生成する必要がります。
 com.baloise.confluence.digital-signature.signature.macro.button.sign-as.label={0}として署名する
+com.baloise.confluence.digital-signature.signature.macro.button.show-all.label=すべて表示する
 com.baloise.confluence.digital-signature.signature.macro.panel.protected-content.label=保護されたページへ進む
 com.baloise.confluence.digital-signature.signature.macro.panel.export.label=署名パネルをエクスポートする
 com.baloise.confluence.digital-signature.signature.macro.panel.email.label=署名者にEメールを送る
