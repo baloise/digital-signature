@@ -27,7 +27,7 @@ public class TemplatesTest {
         //add your parameters to context
         mergeTemplate("src/main/resources/templates/macro.vm", "UTF-8", context, writer);
         writer.flush();
-        String expected = "#requireResource(\"com.baloise.confluence.digital-signature:digital-signature-resources\") <b>$title</b><p>$bodyWithHtml</p><ul class=\"body-list signee-list\"></ul><script type=\"text/javascript\"> AJS.toInit(function() { bindCollapse(AJS.$(\"ul.body-list.signee-list\"), ${visibilityLimit}, '${i18n.getText( \"com.baloise.confluence.digital-signature.signature.macro.button.show-all.label\")}'); });</script>";
+        String expected = "#requireResource(\"com.baloise.confluence.digital-signature:digital-signature-resources\") <b>$title</b><p>$bodyWithHtml</p><ul class=\"body-list\" id=\"$macroId\"></ul><script type=\"text/javascript\"> AJS.toInit(function() { bindCollapse(AJS.$(\"#$macroId\"), ${visibilityLimit}, '${i18n.getText( \"com.baloise.confluence.digital-signature.signature.macro.button.show-all.label\")}'); });</script>";
         assertEquals(expected, normalize(sw.toString()));
     }
 

@@ -1,8 +1,9 @@
 #requireResource("com.baloise.confluence.digital-signature:digital-signature-resources")
 
-#set( $dateFormatter = $action.getDateFormatter())
-#set( $title =  $signature.getTitle())
-#if( $panel)
+#set($dateFormatter = $action.getDateFormatter())
+#set($title = $signature.getTitle())
+#set($macroId = $signature.getKey().replace("signature.", ""))
+#if($panel)
 <div class="panel">
     <div class="panelHeader"><b>$title &nbsp;</b>
         <div class="aui-buttons">
@@ -48,7 +49,7 @@
 
 #set($bodyWithHtml = $markdown.toHTML($signature.getBody()))
     <p>$bodyWithHtml</p>
-    <ul class="body-list signee-list">
+    <ul class="body-list" id="$macroId">
         #foreach ($date2userName in $orderedSignatures)
             #set( $userName =  $date2userName.key)
             #set( $profile =  $profiles.get($userName))
@@ -78,7 +79,7 @@
 
 <script type="text/javascript">
     AJS.toInit(function() {
-        bindCollapse(AJS.$("ul.body-list.signee-list"), ${visibilityLimit}, '${i18n.getText(
+        bindCollapse(AJS.$("#$macroId"), ${visibilityLimit}, '${i18n.getText(
             "com.baloise.confluence.digital-signature.signature.macro.button.show-all.label")}');
     });
 </script>
