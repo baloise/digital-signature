@@ -16,11 +16,14 @@ set JPDA_TRANSPORT=dt_socket
 %CATALINA_HOME%\bin\catalina.bat jpda start
 
 http://127.0.0.1:8090/
+
 atlas-install-plugin -p 8090 --context-path / --plugin-key com.baloise.confluence.digital-signature
+oruncomment the atlassian-pdk configuration in pom.xml and use
+mvn package confluence:install
 
 -------------------
 
-Pure Maven setup ( not for the faint of heart, starup is slow on my box)
+Pure Maven setup ( not for the faint of heart, start up is slow on my box)
 you will be able to remote debug on port 5005
 
 mvn confluence:debug -Dproduct.version=7.4.0 
