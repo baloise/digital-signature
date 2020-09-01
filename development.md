@@ -22,6 +22,9 @@ http://127.0.0.1:8090/
 atlas-install-plugin -p 8090 --context-path / --plugin-key com.baloise.confluence.digital-signature
 ```
 
+or uncomment the atlassian-pdk configuration in pom.xml and use
+mvn package confluence:install
+
 -------------------
 
 Pure Maven setup (not for the faint of heart, startup is slow on my box)
