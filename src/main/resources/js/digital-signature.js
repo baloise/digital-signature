@@ -6,10 +6,10 @@ function bindCollapse(ul, limit, showMore) {
     let $ul = AJS.$(ul);
 
     if (hideElements($ul, limit)) {
-        $ul.prepend("<li class='show-all'><a href='javascript:void(0);'>" + showMore + "</a></li>")
-            .bind("click", function () {
-                showAllElements($ul);
-            });
+        $ul.after("<a href='javascript:void(0);' class='show-all'>" + showMore + "</a>");
+        $ul.siblings("a.show-all").bind("click", function () {
+            showAllElements($ul);
+        });
     }
 }
 
@@ -39,5 +39,5 @@ function hideElements($ul, limit) {
 
 function showAllElements($ul) {
     $ul.find("li").show();
-    $ul.find("li.show-all").remove();
+    $ul.siblings("a.show-all").remove();
 }
