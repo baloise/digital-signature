@@ -18,7 +18,7 @@ set JPDA_TRANSPORT=dt_socket
 http://127.0.0.1:8090/
 
 atlas-install-plugin -p 8090 --context-path / --plugin-key com.baloise.confluence.digital-signature
-oruncomment the atlassian-pdk configuration in pom.xml and use
+or uncomment the atlassian-pdk configuration in pom.xml and use
 mvn package confluence:install
 
 -------------------
