@@ -112,12 +112,12 @@
 
     <build>
         <plugins>
-        	<!-- 
+            <!-- 
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
                 <artifactId>atlassian-pdk</artifactId>
-              	<configuration>
-                	<serverUrl>http://localhost:8090/</serverUrl>
+                <configuration>
+                    <serverUrl>http://localhost:8090/</serverUrl>
                 </configuration>
             </plugin>
             -->
@@ -130,6 +130,7 @@
                     <productVersion>${confluence.version}</productVersion>
                     <productDataVersion>${confluence.data.version}</productDataVersion>
                     <enableQuickReload>false</enableQuickReload>
+                    <extractDependencies>false</extractDependencies>
                     <instructions>
                         <Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
                         <!-- Add package to export here -->
