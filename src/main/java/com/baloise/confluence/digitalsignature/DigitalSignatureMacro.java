@@ -341,13 +341,13 @@ public class DigitalSignatureMacro implements Macro {
         return OutputType.BLOCK;
     }
 
-    String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
+    protected String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
         if (profiles == null || profiles.isEmpty()) return null;
-        profiles = profiles.stream()
-                           .filter(contextHelper::hasEmail)
-                           .collect(toList());
+        Collection<UserProfile> profilesWithMail = profiles.stream()
+                                                           .filter(contextHelper::hasEmail)
+                                                           .collect(toList());
         StringBuilder ret = new StringBuilder("mailto:");
-        for (UserProfile profile : profiles) {
+        for (UserProfile profile : profilesWithMail) {
             if (ret.length() > 7) ret.append(',');
             ret.append(contextHelper.mailTo(profile));
         }
@@ -355,7 +355,7 @@ public class DigitalSignatureMacro implements Macro {
         if (ret.length() > MAX_MAILTO_CHARACTER_COUNT) {
             ret.setLength(0);
             ret.append("mailto:");
-            for (UserProfile profile : profiles) {
+            for (UserProfile profile : profilesWithMail) {
                 if (ret.length() > 7) ret.append(',');
                 ret.append(profile.getEmail().trim());
             }

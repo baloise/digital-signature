@@ -14,9 +14,8 @@ import static org.mockito.Mockito.when;
 
 public class DigitalSignatureMacroTest {
 
-  Signature signature = new Signature(1, "test", "title");
-
-  BootstrapManager bootstrapManager = mock(BootstrapManager.class);
+  private final Signature signature = new Signature(1, "test", "title");
+  private final BootstrapManager bootstrapManager = mock(BootstrapManager.class);
 
   @Test
   public void getMailtoLong() {
