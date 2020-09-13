@@ -1,36 +1,9 @@
-#set( $dateFormatter = $action.getDateFormatter())
-#set( $title =  $signature.getTitle())
-#if( $panel )
-<style type="text/css">
-    .panel {
-        border-width: 1px;
-    }
+#requireResource("com.baloise.confluence.digital-signature:digital-signature-resources")
 
-    .panel .panelHeader {
-        border-bottom-width: 1px;
-        color: #bbb;
-    }
-
-    .panel .panelHeader .aui-buttons {
-        float: right
-    }
-
-    .panel .panelHeader .aui-icon.aui-icon-small.aui-iconfont-attachment {
-        margin-right: 20px;
-    }
-
-    .panel .panelHeader .aui-icon.aui-icon-small.aui-iconfont-file-pdf {
-        float: right;
-    }
-
-    .body-list {
-        list-style-type: none;
-    }
-
-    .body-list .body-list-item {
-        color: #bbb;
-    }
-</style>
+#set($dateFormatter = $action.getDateFormatter())
+#set($title = $signature.getTitle())
+#set($macroId = $signature.getKey().replace("signature.", ""))
+#if($panel)
 <div class="panel">
     <div class="panelHeader"><b>$title &nbsp;</b>
         <div class="aui-buttons">
@@ -73,31 +46,40 @@
 #else
     <b>$title</b>
 #end
+
 #set($bodyWithHtml = $markdown.toHTML($signature.getBody()))
     <p>$bodyWithHtml</p>
-    <ul class="body-list">
+    <ul class="body-list" id="$macroId">
         #foreach ($date2userName in $orderedSignatures)
             #set( $userName =  $date2userName.key)
             #set( $profile =  $profiles.get($userName))
-            <li><input class="checkbox" type="checkbox" checked="checked"
+            <li class="signeelist-signed">
+                <input class="checkbox" type="checkbox" checked="checked"
                        disabled="true"> $dateFormatter.formatDateTime($date2userName.value) - <a
-                    href="mailto:$profile.getEmail()">$profile.getFullName()</a></li>
-        #end
-        #foreach( $profile in $orderedMissingSignatureProfiles)
-            <li class="body-list-item"><input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()
+                    href="mailto:$profile.getEmail()">$profile.getFullName()</a>
             </li>
         #end
-        #if($signAs)
-            <li>
-                <form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()">
-                    <button class="aui-button" type="submit">$i18n.getText(
-                        "com.baloise.confluence.digital-signature.signature.macro.button.sign-as.label", [$signAs])</button>
-                </form>
+        #foreach( $profile in $orderedMissingSignatureProfiles)
+            <li class="body-list-item signeelist-missing">
+                <input class="checkbox" type="checkbox" disabled="true"> $profile.getFullName()
             </li>
         #end
     </ul>
-#if( $panel )
+    #if($signAs)
+        <div>
+            <form action="$signAction"><input type="hidden" name="key" value="$signature.getKey()">
+                <button class="aui-button" type="submit">$i18n.getText(
+                    "com.baloise.confluence.digital-signature.signature.macro.button.sign-as.label", [$signAs])</button>
+            </form>
+        </div>
+    #end
+#if($panel)
 </div></div>
 #end
 
-
+<script type="text/javascript">
+    AJS.toInit(function() {
+        bindCollapse(AJS.$("#$macroId"), ${visibilityLimit}, '${i18n.getText(
+            "com.baloise.confluence.digital-signature.signature.macro.button.show-all.label")}');
+    });
+</script>

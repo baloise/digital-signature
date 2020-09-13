@@ -42,6 +42,7 @@
                 <value name="readers and writers"/>
             </parameter>
             <parameter name="maxSignatures" multiple="false" type="string" required="false"/>
+            <parameter name="visibilityLimit" multiple="false" type="string" required="false"/>
             <parameter name="notified" multiple="true" type="username" required="false"/>
             <parameter name="panel" type="boolean" required="true" default="true"/>
             <parameter name="protectedContent" type="boolean" required="true" default="false"/>
