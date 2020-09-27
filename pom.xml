@@ -8,7 +8,6 @@
     <groupId>com.baloise.confluence</groupId>
     <artifactId>digital-signature</artifactId>
     <version>7.0.2</version>
-
     <organization>
         <name>Baloise</name>
         <url>http://www.baloise.ch/</url>
