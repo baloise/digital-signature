@@ -1,7 +1,7 @@
-- check fixed issues are assigned to milestone : https://github.com/baloise/digital-signature/milestones
+- check fixed issues are assigned to milestone: https://github.com/baloise/digital-signature/milestones
 - increase version in POM
-- mvn clean package
+- `mvn clean package`
 - merge onto release branch
 - set tag
 - push and wait for https://travis-ci.org/baloise/digital-signature/branches to succeed
-- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr ( from https://github.com/baloise/digital-signature/tree/gh-pages/release )
+- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr (from https://github.com/baloise/digital-signature/tree/gh-pages/release)

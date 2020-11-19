@@ -1,0 +1,28 @@
+.panel {
+  border-width: 1px;
+}
+
+.panel .panelHeader {
+  border-bottom-width: 1px;
+  color: #bbb;
+}
+
+.panel .panelHeader .aui-buttons {
+  float: right;
+}
+
+.panel .panelHeader .aui-icon.aui-icon-small.aui-iconfont-attachment {
+  margin-right: 20px;
+}
+
+.panel .panelHeader .aui-icon.aui-icon-small.aui-iconfont-file-pdf {
+  float: right;
+}
+
+.body-list {
+  list-style-type: none;
+}
+
+.body-list .body-list-item {
+  color: #bbb;
+}

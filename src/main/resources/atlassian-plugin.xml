@@ -1,66 +1,64 @@
 <atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}"
-	plugins-version="2">
-	<plugin-info>
-		<description>${project.description}</description>
-		<version>${project.version}</version>
-		<vendor name="${project.organization.name}" url="${project.organization.url}" />
-		<param name="plugin-icon">images/pluginIcon.png</param>
-		<param name="plugin-logo">images/pluginLogo.png</param>
-	</plugin-info>
+                  plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+    </plugin-info>
 
-	<!-- add our i18n resource -->
-	<resource type="i18n" name="i18n" location="digital-signature" />
-	<resource type="download" name="images/" location="/images"/>
-	
-	<!-- add our web resources -->
-	<web-resource key="digital-signature-resources" name="digital-signature Web Resources">
-		<dependency>com.atlassian.auiplugin:ajs</dependency>
+    <!-- add our i18n resource -->
+    <resource type="i18n" name="i18n" location="digital-signature"/>
+    <resource type="download" name="images/" location="/images"/>
 
-		<resource type="download" name="digital-signature.css"
-			location="/css/digital-signature.css" />
-		<resource type="download" name="digital-signature.js"
-			location="/js/digital-signature.js" />
-		<resource type="download" name="images/" location="/images" />
-		<context>digital-signature</context>
-	</web-resource>
+    <!-- add our web resources -->
+    <web-resource key="digital-signature-resources" name="digital-signature Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
 
- 
+        <resource type="download" name="digital-signature.css"
+                  location="/css/digital-signature.css"/>
+        <resource type="download" name="digital-signature.js"
+                  location="/js/digital-signature.js"/>
+        <resource type="download" name="images/" location="/images"/>
+        <context>digital-signature</context>
+    </web-resource>
 
-	<xhtml-macro name="signature"
-		class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro"
-		key="digital-signature"
-		icon="/download/resources/${project.groupId}.${project.artifactId}/images/macro-icon.png"
-		documentation-url="https://github.com/baloise/digital-signature/wiki/Signature-Macro-Usage"
-		>
-		<category name="confluence-content" />
-		<parameters>
-			<parameter name="title" multiple="false" type="string" required="false"/>
-			<parameter name="signers" multiple="true" type="username" required="false"/>
-			<parameter name="signerGroups" multiple="false" type="string" required="false"/>
-			<parameter name="inheritSigners" multiple="false" type="enum" required="true" default="none">
-				<value name="none"/>
-				<value name="readers only"/>
-				<value name="writers only"/>
-				<value name="readers and writers"/>
-			</parameter>
-			<parameter name="maxSignatures" multiple="false" type="string" required="false"/>
-			<parameter name="notified" multiple="true" type="username" required="false"/>
-			<parameter name="panel" type="boolean" required="true" default="true" />
-			<parameter name="protectedContent" type="boolean" required="true" default="false" />
-			<parameter name="signaturesVisible" multiple="false" type="enum" required="true" default="always">
-				<value name="always"/>
-				<value name="if signatory"/>
-				<value name="if signed"/>
-			</parameter>
-			<parameter name="pendingVisible" multiple="false" type="enum" required="true" default="always">
-				<value name="always"/>
-				<value name="if signatory"/>
-				<value name="if signed"/>
-			</parameter>
-		</parameters>
-	</xhtml-macro>
-	
-	
+    <xhtml-macro name="signature"
+                 class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro"
+                 key="digital-signature"
+                 icon="/download/resources/${project.groupId}.${project.artifactId}/images/macro-icon.png"
+                 documentation-url="https://github.com/baloise/digital-signature/wiki/Signature-Macro-Usage"
+    >
+        <category name="confluence-content"/>
+        <parameters>
+            <parameter name="title" multiple="false" type="string" required="false"/>
+            <parameter name="signers" multiple="true" type="username" required="false"/>
+            <parameter name="signerGroups" multiple="false" type="string" required="false"/>
+            <parameter name="inheritSigners" multiple="false" type="enum" required="true" default="none">
+                <value name="none"/>
+                <value name="readers only"/>
+                <value name="writers only"/>
+                <value name="readers and writers"/>
+            </parameter>
+            <parameter name="maxSignatures" multiple="false" type="string" required="false"/>
+            <parameter name="visibilityLimit" multiple="false" type="string" required="false"/>
+            <parameter name="notified" multiple="true" type="username" required="false"/>
+            <parameter name="panel" type="boolean" required="true" default="true"/>
+            <parameter name="protectedContent" type="boolean" required="true" default="false"/>
+            <parameter name="signaturesVisible" multiple="false" type="enum" required="true" default="always">
+                <value name="always"/>
+                <value name="if signatory"/>
+                <value name="if signed"/>
+            </parameter>
+            <parameter name="pendingVisible" multiple="false" type="enum" required="true" default="always">
+                <value name="always"/>
+                <value name="if signatory"/>
+                <value name="if signed"/>
+            </parameter>
+        </parameters>
+    </xhtml-macro>
+
     <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">
         <description>Provides signature services.</description>
         <package>com.baloise.confluence.digitalsignature.rest</package>
