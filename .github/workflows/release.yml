@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+    - name: Build with Maven
+      env:
+        ISRELEASE: true
+      run: mvn -B package --file pom.xml

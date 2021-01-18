@@ -223,10 +223,10 @@
 
     <profiles>
         <profile>
-            <id>travis</id>
+            <id>Release</id>
             <activation>
                 <property>
-                    <name>env.TRAVIS</name>
+                    <name>env.ISRELEASE</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -241,7 +241,7 @@
                             <repositoryOwner>baloise</repositoryOwner>
                             <repositoryName>${project.artifactId}</repositoryName>
                             <message>Releasing ${project.version}</message>
-                            <path>${env.TRAVIS_BRANCH}</path>
+                            <path>${env.GITHUB_REF}</path>
                             <includes>
                                 <include>${project.build.finalName}.jar</include>
                                 <include>${project.build.finalName}.obr</include>

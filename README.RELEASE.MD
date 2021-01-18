@@ -3,5 +3,5 @@
 - `mvn clean package`
 - merge onto release branch
 - set tag
-- push and wait for https://travis-ci.org/baloise/digital-signature/branches to succeed
-- create a version in marketplace https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions and upload obr (from https://github.com/baloise/digital-signature/tree/gh-pages/release)
+- push and wait for the [Release Action](https://github.com/baloise/digital-signature/actions?query=workflow%3A%22Release%22) to succeed
+- create a version in the [atlssian marketplace](https://marketplace.atlassian.com/manage/plugins/com.baloise.confluence.digital-signature/versions) and upload obr from [GitHub Pages](https://github.com/baloise/digital-signature/tree/gh-pages/release).
