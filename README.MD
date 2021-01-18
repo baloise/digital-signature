@@ -8,6 +8,6 @@ Install via [marketplace.atlassian.com](https://marketplace.atlassian.com/plugin
 
 ## Builds
 
-### [release](https://github.com/baloise/digital-signature/tree/gh-pages/release) [![Build Status](https://travis-ci.org/baloise/digital-signature.svg?branch=release)](https://travis-ci.org/baloise/digital-signature/branches)
+[![CI Build State](https://github.com/baloise/digital-signature/workflows/CI/badge.svg)](https://github.com/baloise/digital-signature/actions?query=workflow%3A%22CI%22)
 
-### [master](https://github.com/baloise/digital-signature/tree/gh-pages/master) [![Build Status](https://travis-ci.org/baloise/digital-signature.svg?branch=master)](https://travis-ci.org/baloise/digital-signature/branches)
+[Build Artifacts](https://github.com/baloise/digital-signature/tree/gh-pages/release)
