@@ -18,4 +18,5 @@ jobs:
     - name: Build with Maven
       env:
         ISRELEASE: true
+        GITHUB_TOKEN: ${{ secrets.oauth2token }}
       run: mvn -B package --file pom.xml

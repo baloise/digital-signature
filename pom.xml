@@ -240,14 +240,14 @@
                             <merge>true</merge>
                             <repositoryOwner>baloise</repositoryOwner>
                             <repositoryName>${project.artifactId}</repositoryName>
-                            <message>Releasing ${project.version}</message>
+                            <message>Releasing ${project.version} for tag/branch ${env.GITHUB_REF}</message>
                             <path>${env.GITHUB_REF}</path>
                             <includes>
                                 <include>${project.build.finalName}.jar</include>
                                 <include>${project.build.finalName}.obr</include>
                             </includes>
                             <outputDirectory>target</outputDirectory>
-                            <oauth2Token>${env.github_oauth2Token}</oauth2Token>
+                            <oauth2token>${env.GITHUB_TOKEN}</oauth2token>
                         </configuration>
                         <executions>
                             <execution>
