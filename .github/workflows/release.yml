@@ -10,13 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout Source
+      uses: actions/checkout@v2
+
     - name: Set up Java
       uses: actions/setup-java@v1
       with:
         java-version: '11'
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
     - name: Copy artifacts
       run: |
         mkdir artifacts
@@ -24,10 +28,12 @@ jobs:
         cp target/*.obr artifacts/
         rm artifacts/*-tests.jar
         ls artifacts
+
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
         path: artifacts
+
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
