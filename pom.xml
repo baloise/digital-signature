@@ -102,10 +102,10 @@
             <version>2.2.2-atlassian-1</version>
         </dependency>
         <dependency>
-        	<groupId>org.mockito</groupId>
-        	<artifactId>mockito-all</artifactId>
-        	<version>1.9.0</version>
-        	<scope>test</scope>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -220,47 +220,4 @@
             <url>https://packages.atlassian.com/mvn/maven-external/</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <profiles>
-        <profile>
-            <id>Release</id>
-            <activation>
-                <property>
-                    <name>env.ISRELEASE</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.github</groupId>
-                        <artifactId>site-maven-plugin</artifactId>
-                        <version>0.12</version>
-                        <configuration>
-                            <merge>true</merge>
-                            <repositoryOwner>baloise</repositoryOwner>
-                            <repositoryName>${project.artifactId}</repositoryName>
-                            <message>Releasing ${project.version} for tag/branch ${env.GITHUB_REF}</message>
-                            <path>${env.GITHUB_REF}</path>
-                            <includes>
-                                <include>${project.build.finalName}.jar</include>
-                                <include>${project.build.finalName}.obr</include>
-                            </includes>
-                            <outputDirectory>target</outputDirectory>
-                            <oauth2token>${env.GITHUB_TOKEN}</oauth2token>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>site</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
 </project>

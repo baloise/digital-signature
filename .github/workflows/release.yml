@@ -16,7 +16,24 @@ jobs:
       with:
         java-version: '11'
     - name: Build with Maven
-      env:
-        ISRELEASE: true
-        GITHUB_TOKEN: ${{ secrets.oauth2token }}
       run: mvn -B package --file pom.xml
+    - name: Copy artifacts
+      run: |
+        mkdir artifacts
+        cp target/*.jar artifacts/
+        cp target/*.obr artifacts/
+        rm artifacts/*-tests.jar
+        ls artifacts
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        path: artifacts
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: artifacts
+        CLEAN: false
+        TARGET_FOLDER: ${GITHUB_REF#refs/*/}
+        COMMIT_MESSAGE: Releasing tag/branch ${GITHUB_REF#refs/*/}
