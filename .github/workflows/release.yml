@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source 🛎️
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+
+    - name: Build with Maven 🔧
+      run: mvn -B package --file pom.xml
+
+    - name: Copy artifacts
+      run: |
+        mkdir artifacts
+        cp target/*.jar artifacts/
+        cp target/*.obr artifacts/
+        rm artifacts/*-tests.jar
+        ls artifacts
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        path: artifacts
+
+    - name: Get tag name
+      run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/*/} | tr / -)" >> $GITHUB_ENV
+
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: artifacts
+        CLEAN: false
+        TARGET_FOLDER: ${{ env.TAG_NAME }}
+        COMMIT_MESSAGE: Releasing tag/branch ${{ env.TAG_NAME }}
