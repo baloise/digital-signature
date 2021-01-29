@@ -12,8 +12,10 @@ Allows you to enter a contract into a confluence macro and to sign it as logged 
 - easily send email to signers of the contract
 - receive notifications, when your contract was signed
 
-## Installation
+## Installation & Usage
 Install via [Atlassian Marketplace](https://marketplace.atlassian.com/plugins/com.baloise.confluence.digital-signature).
+
+A detailed description of the available configuration fields and usage is described in the [Wiki...](https://github.com/baloise/digital-signature/wiki/Signature-Macro-Usage)
 
 ## Feature overview
 ### Insert / edit macro
