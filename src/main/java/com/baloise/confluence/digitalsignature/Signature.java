@@ -1,11 +1,15 @@
 package com.baloise.confluence.digitalsignature;
 
-import java.io.Serializable;
-import java.util.*;
-
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
-public class Signature implements Serializable {
+import java.io.Serializable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+public class Signature implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;
 
@@ -83,7 +87,7 @@ public class Signature implements Serializable {
     }
 
     public Set<String> getMissingSignatures() {
-        return missingSignatures;
+    	return missingSignatures;
     }
 
     public void setMissingSignatures(Set<String> missingSignatures) {
@@ -190,5 +194,10 @@ public class Signature implements Serializable {
 
     public boolean hasMissingSignatures() {
         return !isMaxSignaturesReached() && (isPetitionMode() || !getMissingSignatures().isEmpty());
+    }
+    
+    @Override
+    public Signature clone() throws CloneNotSupportedException{  
+    	return (Signature) super.clone();  
     }
 }
