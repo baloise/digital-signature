@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.baloise.confluence</groupId>
     <artifactId>digital-signature</artifactId>
-    <version>7.0.2</version>
+    <version>7.0.3</version>
     <organization>
         <name>Baloise</name>
         <url>http://www.baloise.ch/</url>
@@ -102,10 +102,10 @@
             <version>2.2.2-atlassian-1</version>
         </dependency>
         <dependency>
-        	<groupId>org.mockito</groupId>
-        	<artifactId>mockito-all</artifactId>
-        	<version>1.9.0</version>
-        	<scope>test</scope>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -220,47 +220,4 @@
             <url>https://packages.atlassian.com/mvn/maven-external/</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <profiles>
-        <profile>
-            <id>travis</id>
-            <activation>
-                <property>
-                    <name>env.TRAVIS</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.github</groupId>
-                        <artifactId>site-maven-plugin</artifactId>
-                        <version>0.12</version>
-                        <configuration>
-                            <merge>true</merge>
-                            <repositoryOwner>baloise</repositoryOwner>
-                            <repositoryName>${project.artifactId}</repositoryName>
-                            <message>Releasing ${project.version}</message>
-                            <path>${env.TRAVIS_BRANCH}</path>
-                            <includes>
-                                <include>${project.build.finalName}.jar</include>
-                                <include>${project.build.finalName}.obr</include>
-                            </includes>
-                            <outputDirectory>target</outputDirectory>
-                            <oauth2Token>${env.github_oauth2Token}</oauth2Token>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>site</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
 </project>
