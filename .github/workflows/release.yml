@@ -21,6 +21,19 @@ jobs:
     - name: Build with Maven 🔧
       run: mvn -B package --file pom.xml
 
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Artifacts
+        path: |
+          ./target/*.jar
+          ./target/*.obr
+
+    - name: Release using Github CLI
+      run: gh release create ${GITHUB_REF##*/} ./target/*.jar ./target/*.obr -t "Release ${GITHUB_REF##*/}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Copy artifacts
       run: |
         mkdir artifacts
@@ -29,14 +42,6 @@ jobs:
         rm artifacts/*-tests.jar
         ls artifacts
 
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        path: artifacts
-
-    - name: Get tag name
-      run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/*/} | tr / -)" >> $GITHUB_ENV
-
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
@@ -44,5 +49,5 @@ jobs:
         BRANCH: gh-pages
         FOLDER: artifacts
         CLEAN: false
-        TARGET_FOLDER: ${{ env.TAG_NAME }}
-        COMMIT_MESSAGE: Releasing tag/branch ${{ env.TAG_NAME }}
+        TARGET_FOLDER: ${GITHUB_REF##*/}
+        COMMIT_MESSAGE: Releasing tag/branch ${GITHUB_REF##*/}
