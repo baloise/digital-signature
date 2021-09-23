@@ -58,7 +58,7 @@ This macro was written by [Matthias Cullmann](@culmat).
 It is maintained in the Open Source Community at Baloise.
 
 ## License
-This project is licensed under the [Apache-2.0 License](https://github.com/baloise/digital-signature/blob/master/LICENSE).
+This project is licensed under the [Apache-2.0 License](https://github.com/baloise/digital-signature/blob/main/LICENSE).
 
 ## Releases
 [Build Artifacts](https://github.com/baloise/digital-signature/tree/gh-pages/release)
