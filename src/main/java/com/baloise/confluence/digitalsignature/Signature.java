@@ -1,20 +1,21 @@
 package com.baloise.confluence.digitalsignature;
 
+import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
-
 import java.io.Serializable;
 import java.util.*;
+
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class Signature implements Serializable, Cloneable {
+public class Signature implements Serializable {
+  public static final Gson GSON = new Gson();
   private static final long serialVersionUID = 1L;
-
   private String key = "";
   private String hash = "";
   private long pageId;
@@ -30,14 +31,22 @@ public class Signature implements Serializable, Cloneable {
     this.pageId = pageId;
     this.body = body;
     this.title = title == null ? "" : title;
-    hash = sha256Hex(pageId + ":" + title + ":" + body);
-    key = "signature." + hash;
+    this.hash = sha256Hex(pageId + ":" + title + ":" + body);
+    this.key = "signature." + hash;
   }
 
   public static boolean isPetitionMode(Set<String> userGroups) {
     return userGroups != null
                && userGroups.size() == 1
                && userGroups.iterator().next().trim().equals("*");
+  }
+
+  public static Signature deserialize(String serialization) {
+    return GSON.fromJson(serialization, Signature.class);
+  }
+
+  public String serialize() {
+    return GSON.toJson(this, Signature.class);
   }
 
   public String getHash() {
@@ -117,10 +126,5 @@ public class Signature implements Serializable, Cloneable {
 
   public boolean hasMissingSignatures() {
     return !isMaxSignaturesReached() && (isPetitionMode() || !getMissingSignatures().isEmpty());
-  }
-
-  @Override
-  public Signature clone() throws CloneNotSupportedException {
-    return (Signature) super.clone();
   }
 }

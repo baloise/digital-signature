@@ -1,5 +1,6 @@
 package com.baloise.confluence.digitalsignature;
 
+import com.atlassian.bandana.BandanaContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
@@ -57,7 +58,13 @@ public class DigitalSignatureMacro implements Macro {
   private final ContextHelper contextHelper = new ContextHelper();
 
   @Autowired
-  public DigitalSignatureMacro(@ComponentImport BandanaManager bandanaManager, @ComponentImport UserManager userManager, @ComponentImport BootstrapManager bootstrapManager, @ComponentImport PageManager pageManager, @ComponentImport PermissionManager permissionManager, @ComponentImport GroupManager groupManager, @ComponentImport I18nResolver i18nResolver) {
+  public DigitalSignatureMacro(@ComponentImport BandanaManager bandanaManager,
+                               @ComponentImport UserManager userManager,
+                               @ComponentImport BootstrapManager bootstrapManager,
+                               @ComponentImport PageManager pageManager,
+                               @ComponentImport PermissionManager permissionManager,
+                               @ComponentImport GroupManager groupManager,
+                               @ComponentImport I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.userManager = userManager;
     this.bootstrapManager = bootstrapManager;
@@ -65,6 +72,8 @@ public class DigitalSignatureMacro implements Macro {
     this.permissionManager = permissionManager;
     this.groupManager = groupManager;
     this.i18nResolver = i18nResolver;
+
+    this.bandanaManager.init();
     all.add("*");
   }
 
@@ -154,11 +163,6 @@ public class DigitalSignatureMacro implements Macro {
   }
 
   private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {
-    try {
-      signature = signature.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new IllegalStateException(e);
-    }
     boolean pendingVisible = isVisible(signature, currentUserName, params.get("pendingVisible"));
     boolean signaturesVisible = isVisible(signature, currentUserName, params.get("signaturesVisible"));
     if (!pendingVisible) signature.setMissingSignatures(new TreeSet<>());
@@ -267,7 +271,7 @@ public class DigitalSignatureMacro implements Macro {
   }
 
   private Signature sync(Signature signature, Set<String> signers) {
-    Signature loaded = (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, signature.getKey());
+    Signature loaded = fromBandana(GLOBAL_CONTEXT, signature.getKey());
     if (loaded != null) {
       signature.setSignatures(loaded.getSignatures());
       boolean save = false;
@@ -303,7 +307,25 @@ public class DigitalSignatureMacro implements Macro {
   }
 
   private void save(Signature signature) {
-    if (signature.hasMissingSignatures()) bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature);
+    if (signature.hasMissingSignatures()) {
+      bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature.serialize());
+    }
+  }
+
+  Signature fromBandana(BandanaContext context, String key) {
+    Object value = this.bandanaManager.getValue(context, key);
+    if (value instanceof Signature) {
+      // required for downward compatibility - update for next time.
+      Signature signature = (Signature) value;
+      this.bandanaManager.setValue(context, key, signature.serialize());
+      return signature;
+    }
+
+    if (value instanceof String) {
+      return Signature.deserialize((String) value);
+    }
+
+    throw new IllegalArgumentException("Cannot read value from Bandana.");
   }
 
   @Override

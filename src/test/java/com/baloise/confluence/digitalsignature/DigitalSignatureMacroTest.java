@@ -1,5 +1,6 @@
 package com.baloise.confluence.digitalsignature;
 
+import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.sal.api.user.UserProfile;
 import org.junit.jupiter.api.Test;
@@ -14,10 +15,11 @@ import static org.mockito.Mockito.when;
 class DigitalSignatureMacroTest {
   private final Signature signature = new Signature(1, "test", "title");
   private final BootstrapManager bootstrapManager = mock(BootstrapManager.class);
+  private final BandanaManager bandana = mock(BandanaManager.class);
 
   @Test
   void getMailtoLong() {
-    DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, null, null, null, null, null);
+    DigitalSignatureMacro macro = new DigitalSignatureMacro(bandana, null, null, null, null, null, null);
     List<UserProfile> profiles = new ArrayList<>();
     UserProfile profile = mock(UserProfile.class);
     when(profile.getFullName()).thenReturn("Heinz Meier");
@@ -35,7 +37,7 @@ class DigitalSignatureMacroTest {
   void getMailtoVeryLong() {
     when(bootstrapManager.getWebAppContextPath()).thenReturn("nirvana");
 
-    DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, bootstrapManager, null, null, null, null);
+    DigitalSignatureMacro macro = new DigitalSignatureMacro(bandana, null, bootstrapManager, null, null, null, null);
     List<UserProfile> profiles = new ArrayList<>();
     UserProfile profile = mock(UserProfile.class);
     when(profile.getFullName()).thenReturn("Heinz Meier");
@@ -51,7 +53,7 @@ class DigitalSignatureMacroTest {
 
   @Test
   void getMailtoShort() {
-    DigitalSignatureMacro macro = new DigitalSignatureMacro(null, null, null, null, null, null, null);
+    DigitalSignatureMacro macro = new DigitalSignatureMacro(bandana, null, null, null, null, null, null);
     List<UserProfile> profiles = new ArrayList<>();
     UserProfile profile = mock(UserProfile.class);
     when(profile.getFullName()).thenReturn("Heinz Meier");
