@@ -1,12 +1,12 @@
 #set( $dateFormatter = $action.getDateFormatter())
 <style type="text/css">
-    body {
-        padding: 2% 4% 2% 4%;
-    }
+  body {
+    padding: 2% 4% 2% 4%;
+  }
 
-    td {
-        padding-right: 12px;
-    }
+  td {
+    padding-right: 12px;
+  }
 </style>
 <h1>$signature.getTitle()</h1>
 #set($bodyWithHtml = $markdown.toHTML($signature.getBody()))
@@ -15,18 +15,18 @@
     #foreach ($date2userName in $orderedSignatures)
         #set( $userName =  $date2userName.key)
         #set( $profile =  $profiles.get($userName))
-        <tr>
-            <td>$dateFormatter.formatDateTime($date2userName.value)</td>
-            <td>$profile.getFullName()</td>
-            <td>$profile.getEmail()</td>
-        </tr>
+      <tr>
+        <td>$dateFormatter.formatDateTime($date2userName.value)</td>
+        <td>$profile.getFullName()</td>
+        <td>$profile.getEmail()</td>
+      </tr>
     #end
     #foreach( $profile in $orderedMissingSignatureProfiles)
-        <tr>
-            <td></td>
-            <td>$profile.getFullName()</td>
-            <td>$profile.getEmail()</td>
-        </tr>
+      <tr>
+        <td></td>
+        <td>$profile.getFullName()</td>
+        <td>$profile.getEmail()</td>
+      </tr>
     #end
 </table>
 <!-- generated $dateFormatter.formatDateTime($currentDate) -->
