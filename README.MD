@@ -25,8 +25,6 @@ the [Wiki...](https://github.com/baloise/digital-signature/wiki/Signature-Macro-
 
 ## Using Confluence Data Center Version
 Digital-signature can be used on Confluence Data Center, however it is not yet officially tested and approved.
-When performing an update you might have to invalidate the plugin cache and restart Confluence. For details refer
-to [#68](https://github.com/baloise/digital-signature/issues/68).
 
 ## Feature overview
 ### Insert / edit macro
