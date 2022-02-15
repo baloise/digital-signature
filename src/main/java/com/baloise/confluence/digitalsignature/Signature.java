@@ -1,15 +1,19 @@
 package com.baloise.confluence.digitalsignature;
 
+import com.atlassian.bandana.BandanaManager;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.*;
 
+import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,12 +45,47 @@ public class Signature implements Serializable {
                && userGroups.iterator().next().trim().equals("*");
   }
 
-  public static Signature deserialize(String serialization) {
+  String serialize() {
+    return GSON.toJson(this, Signature.class);
+  }
+
+  static Signature deserialize(String serialization) {
     return GSON.fromJson(serialization, Signature.class);
   }
 
-  public String serialize() {
-    return GSON.toJson(this, Signature.class);
+  public static Signature fromBandana(BandanaManager mgr, String key) {
+    Object value = mgr.getValue(GLOBAL_CONTEXT, key);
+
+    if (value == null) {
+      return null;
+    }
+
+    if (value instanceof Signature) {
+      // required for downward compatibility - update for next time.
+      Signature signature = (Signature) value;
+      toBandana(mgr, key, signature);
+      return signature;
+    }
+
+    if (value instanceof String) {
+      try {
+        return deserialize((String) value);
+      } catch (Exception e) {
+        log.error("Could not deserialize String value from Bandana", e);
+        return null;
+      }
+    }
+
+    log.error("Could not deserialize {} value from Bandana", value.getClass().getName());
+    return null;
+  }
+
+  public static void toBandana(BandanaManager mgr, String key, Signature sig) {
+    mgr.setValue(GLOBAL_CONTEXT, key, sig.serialize());
+  }
+
+  public static void toBandana(BandanaManager mgr, Signature sig) {
+    toBandana(mgr, sig.getKey(), sig);
   }
 
   public String getHash() {

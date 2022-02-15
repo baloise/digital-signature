@@ -1,6 +1,5 @@
 package com.baloise.confluence.digitalsignature;
 
-import com.atlassian.bandana.BandanaContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
@@ -73,7 +72,6 @@ public class DigitalSignatureMacro implements Macro {
     this.groupManager = groupManager;
     this.i18nResolver = i18nResolver;
 
-    this.bandanaManager.init();
     all.add("*");
   }
 
@@ -271,7 +269,7 @@ public class DigitalSignatureMacro implements Macro {
   }
 
   private Signature sync(Signature signature, Set<String> signers) {
-    Signature loaded = fromBandana(GLOBAL_CONTEXT, signature.getKey());
+    Signature loaded = Signature.fromBandana(this.bandanaManager, signature.getKey());
     if (loaded != null) {
       signature.setSignatures(loaded.getSignatures());
       boolean save = false;
@@ -308,24 +306,8 @@ public class DigitalSignatureMacro implements Macro {
 
   private void save(Signature signature) {
     if (signature.hasMissingSignatures()) {
-      bandanaManager.setValue(GLOBAL_CONTEXT, signature.getKey(), signature.serialize());
+      Signature.toBandana(bandanaManager, signature);
     }
-  }
-
-  Signature fromBandana(BandanaContext context, String key) {
-    Object value = this.bandanaManager.getValue(context, key);
-    if (value instanceof Signature) {
-      // required for downward compatibility - update for next time.
-      Signature signature = (Signature) value;
-      this.bandanaManager.setValue(context, key, signature.serialize());
-      return signature;
-    }
-
-    if (value instanceof String) {
-      return Signature.deserialize((String) value);
-    }
-
-    throw new IllegalArgumentException("Cannot read value from Bandana.");
   }
 
   @Override

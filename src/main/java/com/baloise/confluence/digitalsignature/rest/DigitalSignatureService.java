@@ -13,6 +13,7 @@ import com.atlassian.mail.server.SMTPMailServer;
 import com.atlassian.mywork.model.NotificationBuilder;
 import com.atlassian.mywork.service.LocalNotificationService;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -20,8 +21,8 @@ import com.atlassian.velocity.htmlsafe.HtmlSafe;
 import com.baloise.confluence.digitalsignature.ContextHelper;
 import com.baloise.confluence.digitalsignature.Markdown;
 import com.baloise.confluence.digitalsignature.Signature;
-import lombok.RequiredArgsConstructor;
 import org.apache.velocity.tools.generic.DateTool;
+import org.jsoup.helper.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,6 @@ import java.util.function.Function;
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
 import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
 import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
-import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
 import static java.lang.String.format;
@@ -53,9 +53,8 @@ import static javax.ws.rs.core.Response.temporaryRedirect;
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Scanned
-@RequiredArgsConstructor
-public class DigitalSigatureService {
-  private static final Logger log = LoggerFactory.getLogger(DigitalSigatureService.class);
+public class DigitalSignatureService {
+  private static final Logger log = LoggerFactory.getLogger(DigitalSignatureService.class);
   private final BandanaManager bandanaManager;
   private final SettingsManager settingsManager;
   private final UserManager userManager;
@@ -66,12 +65,36 @@ public class DigitalSigatureService {
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
 
+  public DigitalSignatureService(
+      @ComponentImport BandanaManager bandanaManager,
+      @ComponentImport SettingsManager settingsManager,
+      @ComponentImport UserManager userManager,
+      @ComponentImport LocalNotificationService notificationService,
+      @ComponentImport MailServerManager mailServerManager,
+      @ComponentImport PageManager pageManager,
+      @ComponentImport I18nResolver i18nResolver) {
+    this.bandanaManager = bandanaManager;
+    this.settingsManager = settingsManager;
+    this.userManager = userManager;
+    this.notificationService = notificationService;
+    this.mailServerManager = mailServerManager;
+    this.pageManager = pageManager;
+    this.i18nResolver = i18nResolver;
+  }
+
   @GET
   @Path("sign")
-  public Response sign(@QueryParam("key") final String key, @Context UriInfo uriInfo) {
+  public Response sign(@QueryParam("key") final String key,
+                       @Context UriInfo uriInfo) {
     ConfluenceUser confluenceUser = AuthenticatedUserThreadLocal.get();
     String userName = confluenceUser.getName();
-    Signature signature = (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
+    Signature signature = Signature.fromBandana(bandanaManager, key);
+
+    if (signature == null || StringUtil.isBlank(userName)) {
+      log.error("Both, a signature and a user name are required to call this method.",
+          new NullPointerException(signature == null ? "signature" : "userName"));
+      return Response.noContent().build();
+    }
 
     if (!signature.sign(userName)) {
       status(Response.Status.BAD_REQUEST)
@@ -79,8 +102,8 @@ public class DigitalSigatureService {
           .type(MediaType.TEXT_PLAIN)
           .build();
     }
-    bandanaManager.setValue(GLOBAL_CONTEXT, key, signature);
 
+    Signature.toBandana(bandanaManager, key, signature);
     String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
     for (String notifiedUser : signature.getNotify()) {
       notify(notifiedUser, confluenceUser, signature, baseUrl);
@@ -91,6 +114,7 @@ public class DigitalSigatureService {
       protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, confluenceUser));
       pageManager.saveContentEntity(protectedPage, null);
     }
+
     URI pageUri = create(settingsManager.getGlobalSettings().getBaseUrl() + "/pages/viewpage.action?pageId=" + signature.getPageId());
     return temporaryRedirect(pageUri).build();
   }
@@ -99,27 +123,30 @@ public class DigitalSigatureService {
     try {
       UserProfile notifiedUserProfile = contextHelper.getProfileNotNull(userManager, notifiedUser);
 
-      String user = format("<a href='%s'>%s</a>",
-          baseUrl + "/display/~" + signedUser.getName(),
+      String user = format("<a href='%s/display/~%s'>%s</a>",
+          baseUrl,
+          signedUser.getName(),
           signedUser.getFullName()
       );
-      String document = format("<a href='%s'>%s</a>",
-          baseUrl + "/pages/viewpage.action?pageId=" + signature.getPageId(),
+      String document = format("<a href='%s/pages/viewpage.action?pageId=%d'>%s</a>",
+          baseUrl,
+          signature.getPageId(),
           signature.getTitle()
       );
       String html = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", user, document);
       if (signature.isMaxSignaturesReached()) {
-        html = html + "<br/>" + i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.warning.maxSignaturesReached", signature.getMaxSignatures());
+        html += "<br/>" + i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.warning.maxSignaturesReached", signature.getMaxSignatures());
       }
       String titleText = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", signedUser.getFullName(), signature.getTitle());
 
-      notificationService.createOrUpdate(notifiedUser, new NotificationBuilder()
-          .application(PLUGIN_KEY) // a unique key that identifies your plugin
-          .title(titleText)
-          .itemTitle(titleText)
-          .description(html)
-          .groupingId(PLUGIN_KEY + "-signature") // a key to aggregate notifications
-          .createNotification()).get();
+      notificationService.createOrUpdate(notifiedUser,
+          new NotificationBuilder()
+              .application(PLUGIN_KEY) // a unique key that identifies your plugin
+              .title(titleText)
+              .itemTitle(titleText)
+              .description(html)
+              .groupingId(PLUGIN_KEY + "-signature") // a key to aggregate notifications
+              .createNotification()).get();
 
       SMTPMailServer mailServer = mailServerManager.getDefaultSMTPMailServer();
 
@@ -145,7 +172,12 @@ public class DigitalSigatureService {
   @Produces("text/html; charset=UTF-8")
   @HtmlSafe
   public String export(@QueryParam("key") final String key) {
-    Signature signature = (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
+    Signature signature = Signature.fromBandana(bandanaManager, key);
+
+    if (signature == null) {
+      log.error("A signature is required to call this method.", new NullPointerException("signature"));
+      return "ERROR: A signature is required to call this method.";
+    }
 
     Map<String, UserProfile> signed = contextHelper.getProfiles(userManager, signature.getSignatures().keySet());
     Map<String, UserProfile> missing = contextHelper.getProfiles(userManager, signature.getMissingSignatures());
@@ -165,9 +197,20 @@ public class DigitalSigatureService {
   @GET
   @Path("emails")
   @Produces("text/html; charset=UTF-8")
-  public Response emails(@QueryParam("key") final String key, @QueryParam("signed") final boolean signed, @QueryParam("emailOnly") final boolean emailOnly, @Context UriInfo uriInfo) {
-    Signature signature = (Signature) bandanaManager.getValue(GLOBAL_CONTEXT, key);
-    Map<String, UserProfile> profiles = contextHelper.getProfiles(userManager, signed ? signature.getSignatures().keySet() : signature.getMissingSignatures());
+  public Response emails(@QueryParam("key") final String key,
+                         @QueryParam("signed") final boolean signed,
+                         @QueryParam("emailOnly") final boolean emailOnly,
+                         @Context UriInfo uriInfo) {
+    Signature signature = Signature.fromBandana(bandanaManager, key);
+
+    if (signature == null) {
+      log.error("A signature is required to call this method.", new NullPointerException("signature"));
+      return Response.noContent().build();
+    }
+
+    Map<String, UserProfile> profiles = contextHelper.getProfiles(userManager, signed
+                                                                                   ? signature.getSignatures().keySet()
+                                                                                   : signature.getMissingSignatures());
 
     Map<String, Object> context = defaultVelocityContext();
     context.put("signature", signature);
