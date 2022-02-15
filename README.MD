@@ -13,10 +13,12 @@ Allows confluence users to write contracts in a confluence macro which can be si
 - receive notifications, when your contract was signed
 
 ## ClassCastException issue
+![ClassCastException in Macro](./docs/img/classcastexception.png)
+
 If you observe issues in the Macro resulting in a `ClassCastException` please update digital-signature to version 7.0.5,
 clear the plugin cache (one last time) and restart confluence.
 
-For backroung information please refer to [#82](https://github.com/baloise/digital-signature/issues/82.)
+For background information please refer to [#82](https://github.com/baloise/digital-signature/issues/82.)
 
 ## Privacy Policy
 - We do not transfer or store any data outside your Atlassian product.
