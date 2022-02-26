@@ -1,4 +1,5 @@
-<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}"
+<atlassian-plugin key="${atlassian.plugin.key}"
+                  name="${project.name}"
                   plugins-version="2">
     <plugin-info>
         <description>${project.description}</description>
@@ -6,6 +7,7 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}"/>
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
+        <param name="plugin-type">both</param>
     </plugin-info>
 
     <!-- add our i18n resource -->
@@ -63,5 +65,4 @@
         <description>Provides signature services.</description>
         <package>com.baloise.confluence.digitalsignature.rest</package>
     </rest>
-
 </atlassian-plugin>

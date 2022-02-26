@@ -1,6 +1,5 @@
 package com.baloise.confluence.digitalsignature;
 
-
 import org.junit.jupiter.api.Test;
 
 import java.io.FileOutputStream;
@@ -10,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 
 class SignatureSerialisationTest {
   @Test

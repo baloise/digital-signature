@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -18,8 +19,9 @@ import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 @Setter
 @NoArgsConstructor
 public class Signature implements Serializable {
-  public static final Gson GSON = new Gson();
+  @Serial
   private static final long serialVersionUID = 1L;
+  public static final Gson GSON = new Gson();
   private String key = "";
   private String hash = "";
   private long pageId;
