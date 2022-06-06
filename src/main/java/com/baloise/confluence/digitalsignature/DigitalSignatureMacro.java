@@ -29,12 +29,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.*;
 
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
 import static com.atlassian.confluence.security.ContentPermission.*;
-import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -296,7 +296,9 @@ public class DigitalSignatureMacro implements Macro {
         save = true;
       }
 
-      if (save) save(loaded);
+      if (save) {
+        save(loaded);
+      }
     } else {
       signature.setMissingSignatures(signers);
       save(signature);
@@ -346,7 +348,7 @@ public class DigitalSignatureMacro implements Macro {
 
   public String urlEncode(String string) {
     try {
-      return URLEncoder.encode(string, "UTF-8");
+      return URLEncoder.encode(string, StandardCharsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException(e);
     }

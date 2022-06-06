@@ -65,14 +65,13 @@ public class DigitalSignatureService {
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
 
-  public DigitalSignatureService(
-      @ComponentImport BandanaManager bandanaManager,
-      @ComponentImport SettingsManager settingsManager,
-      @ComponentImport UserManager userManager,
-      @ComponentImport LocalNotificationService notificationService,
-      @ComponentImport MailServerManager mailServerManager,
-      @ComponentImport PageManager pageManager,
-      @ComponentImport I18nResolver i18nResolver) {
+  public DigitalSignatureService(@ComponentImport BandanaManager bandanaManager,
+                                 @ComponentImport SettingsManager settingsManager,
+                                 @ComponentImport UserManager userManager,
+                                 @ComponentImport LocalNotificationService notificationService,
+                                 @ComponentImport MailServerManager mailServerManager,
+                                 @ComponentImport PageManager pageManager,
+                                 @ComponentImport I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.settingsManager = settingsManager;
     this.userManager = userManager;

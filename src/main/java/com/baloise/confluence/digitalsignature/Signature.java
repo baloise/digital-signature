@@ -41,12 +41,8 @@ public class Signature implements Serializable {
 
   public static boolean isPetitionMode(Set<String> userGroups) {
     return userGroups != null
-               && userGroups.size() == 1
-               && userGroups.iterator().next().trim().equals("*");
-  }
-
-  String serialize() {
-    return GSON.toJson(this, Signature.class);
+           && userGroups.size() == 1
+           && userGroups.iterator().next().trim().equals("*");
   }
 
   static Signature deserialize(String serialization) {
@@ -57,7 +53,7 @@ public class Signature implements Serializable {
     Object value = mgr.getValue(GLOBAL_CONTEXT, key);
 
     if (value == null) {
-      return null;
+      throw new IllegalArgumentException("Value is null in Bandana???");
     }
 
     if (value instanceof Signature) {
@@ -76,8 +72,7 @@ public class Signature implements Serializable {
       }
     }
 
-    log.error("Could not deserialize {} value from Bandana", value.getClass().getName());
-    return null;
+    throw new IllegalArgumentException(String.format("Could not deserialize %s value from Bandana. Please clear the plugin-cache and reboot confluence. (https://github.com/baloise/digital-signature/issues/82)", value));
   }
 
   public static void toBandana(BandanaManager mgr, String key, Signature sig) {
@@ -86,6 +81,10 @@ public class Signature implements Serializable {
 
   public static void toBandana(BandanaManager mgr, Signature sig) {
     toBandana(mgr, sig.getKey(), sig);
+  }
+
+  String serialize() {
+    return GSON.toJson(this, Signature.class);
   }
 
   public String getHash() {
