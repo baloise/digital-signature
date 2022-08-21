@@ -13,7 +13,7 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SignatureSerialisationTest {
-  public static final String SIG_JSON = "{\"key\":\"signature.a077cdcc5bfcf275fe447ae2c609c1c361331b4e90cb85909582e0d824cbc5b3\",\"hash\":\"a077cdcc5bfcf275fe447ae2c609c1c361331b4e90cb85909582e0d824cbc5b3\",\"pageId\":123,\"title\":\"title\",\"body\":\"body\",\"maxSignatures\":-1,\"visibilityLimit\":-1,\"signatures\":{\"signed1\":\"Jan 1, 1970, 1:00:09 AM\"},\"missingSignatures\":[\"missing1\",\"missing2\"],\"notify\":[\"notify1\"]}";
+  public static final String SIG_JSON = "{\"key\":\"signature.a077cdcc5bfcf275fe447ae2c609c1c361331b4e90cb85909582e0d824cbc5b3\",\"hash\":\"a077cdcc5bfcf275fe447ae2c609c1c361331b4e90cb85909582e0d824cbc5b3\",\"pageId\":123,\"title\":\"title\",\"body\":\"body\",\"maxSignatures\":-1,\"visibilityLimit\":-1,\"signatures\":{\"signed1\":\"1970-01-01T01:00:09CET\"},\"missingSignatures\":[\"missing1\",\"missing2\"],\"notify\":[\"notify1\"]}";
 
   @Test
   void deserialize() throws IOException, ClassNotFoundException {

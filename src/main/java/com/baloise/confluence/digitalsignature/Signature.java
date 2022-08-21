@@ -2,6 +2,7 @@ package com.baloise.confluence.digitalsignature;
 
 import com.atlassian.bandana.BandanaManager;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,7 +19,7 @@ import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 @Setter
 @NoArgsConstructor
 public class Signature implements Serializable {
-  public static final Gson GSON = new Gson();
+  public static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssz").create();
   private static final long serialVersionUID = 1L;
   private String key = "";
   private String hash = "";
