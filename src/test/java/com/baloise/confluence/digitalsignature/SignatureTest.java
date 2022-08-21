@@ -1,16 +1,17 @@
 package com.baloise.confluence.digitalsignature;
 
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.bandana.DefaultBandanaManager;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
-import java.util.Set;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class SignatureTest {
   @Nested
@@ -28,8 +29,8 @@ class SignatureTest {
     void serialize_initializedObject() {
       Signature signature = new Signature(42L, "body text", "title text");
       signature.sign("max.mustermann");
-      signature.setMissingSignatures(Set.of("max.muster"));
-      signature.setNotify(Set.of("max.meier"));
+      signature.setMissingSignatures(Collections.singleton("max.muster"));
+      signature.setNotify(Collections.singleton("max.meier"));
 
       String json = signature.serialize();
 
@@ -46,8 +47,8 @@ class SignatureTest {
     void serializeAndDeserialize() {
       Signature signature = new Signature(42L, "body text", "title text");
       signature.sign("max.mustermann");
-      signature.setMissingSignatures(Set.of("max.muster"));
-      signature.setNotify(Set.of("max.meier"));
+      signature.setMissingSignatures(Collections.singleton("max.muster"));
+      signature.setNotify(Collections.singleton("max.meier"));
 
       String json = signature.serialize();
 
@@ -60,25 +61,51 @@ class SignatureTest {
 
   @Nested
   class BandanaWrapperTest {
+    private final BandanaManager bandana = mock(DefaultBandanaManager.class);
     private final Signature signature = new Signature(1, "test", "title");
-    private final BandanaManager bandana = mock(BandanaManager.class);
 
     @Test
-    void fromBandana_signature_signature() {
-      when(bandana.getValue(any(), any())).thenReturn(signature.serialize());
+    void toBandanaFromBandana_readAsWritten() {
+      ArgumentCaptor<String> stringCapator = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<Object> objectCapator = ArgumentCaptor.forClass(Object.class);
 
-      Signature readSignature = Signature.fromBandana(bandana, null);
+      String key = signature.getKey();
+      assertNull(Signature.fromBandana(bandana, key), "Should not be there yet.");
 
-      assertEquals(signature, readSignature);
+      doNothing().when(bandana).setValue(any(), stringCapator.capture(), objectCapator.capture());
+      when(bandana.getKeys(any())).thenReturn(Collections.singletonList(key));
+
+      Signature.toBandana(bandana, signature);
+      assertEquals(key, stringCapator.getValue());
+      assertEquals(signature.serialize(), objectCapator.getValue());
+
+      when(bandana.getValue(any(), any())).thenCallRealMethod();
+      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature);
+      assertEquals(signature, Signature.fromBandana(bandana, signature.getKey()));
     }
 
     @Test
-    void fromBandana_string_signatur() {
-      when(bandana.getValue(any(), any())).thenReturn(signature);
+    void fromBandana_signature_signature() {
+      String key = signature.getKey();
+      assertNull(Signature.fromBandana(bandana, key), "Should not be there yet.");
 
-      Signature readSignature = Signature.fromBandana(bandana, null);
+      when(bandana.getKeys(any())).thenReturn(Collections.singletonList(key));
+      when(bandana.getValue(any(), any())).thenCallRealMethod();
+      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature);
 
-      assertEquals(signature, readSignature);
+      assertEquals(signature, Signature.fromBandana(bandana, signature.getKey()));
+    }
+
+    @Test
+    void fromBandana_string_signature() {
+      String key = signature.getKey();
+      assertNull(Signature.fromBandana(bandana, key), "Should not be there yet.");
+
+      when(bandana.getKeys(any())).thenReturn(Collections.singletonList(key));
+      when(bandana.getValue(any(), any())).thenCallRealMethod();
+      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature.serialize());
+
+      assertEquals(signature, Signature.fromBandana(bandana, signature.getKey()));
     }
   }
 }

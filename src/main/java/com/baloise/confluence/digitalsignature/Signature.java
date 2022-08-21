@@ -1,7 +1,9 @@
 package com.baloise.confluence.digitalsignature;
 
 import com.atlassian.bandana.BandanaManager;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +21,7 @@ import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 @Setter
 @NoArgsConstructor
 public class Signature implements Serializable {
+  public static final Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssz").create();
   @Serial
   private static final long serialVersionUID = 1L;
   public static final Gson GSON = new Gson();
@@ -43,12 +46,8 @@ public class Signature implements Serializable {
 
   public static boolean isPetitionMode(Set<String> userGroups) {
     return userGroups != null
-               && userGroups.size() == 1
-               && userGroups.iterator().next().trim().equals("*");
-  }
-
-  String serialize() {
-    return GSON.toJson(this, Signature.class);
+           && userGroups.size() == 1
+           && userGroups.iterator().next().trim().equals("*");
   }
 
   static Signature deserialize(String serialization) {
@@ -56,10 +55,15 @@ public class Signature implements Serializable {
   }
 
   public static Signature fromBandana(BandanaManager mgr, String key) {
+    if (mgr.getKeys(GLOBAL_CONTEXT) == null
+        || !Sets.newHashSet(mgr.getKeys(GLOBAL_CONTEXT)).contains(key)) {
+      return null;
+    }
+
     Object value = mgr.getValue(GLOBAL_CONTEXT, key);
 
     if (value == null) {
-      return null;
+      throw new IllegalArgumentException("Value is null in Bandana???");
     }
 
     if (value instanceof Signature) {
@@ -78,8 +82,7 @@ public class Signature implements Serializable {
       }
     }
 
-    log.error("Could not deserialize {} value from Bandana", value.getClass().getName());
-    return null;
+    throw new IllegalArgumentException(String.format("Could not deserialize %s value from Bandana. Please clear the plugin-cache and reboot confluence. (https://github.com/baloise/digital-signature/issues/82)", value));
   }
 
   public static void toBandana(BandanaManager mgr, String key, Signature sig) {
@@ -88,6 +91,10 @@ public class Signature implements Serializable {
 
   public static void toBandana(BandanaManager mgr, Signature sig) {
     toBandana(mgr, sig.getKey(), sig);
+  }
+
+  String serialize() {
+    return GSON.toJson(this, Signature.class);
   }
 
   public String getHash() {
