@@ -1,6 +1,7 @@
 package com.baloise.confluence.digitalsignature;
 
 import com.atlassian.bandana.BandanaManager;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.Getter;
@@ -51,6 +52,11 @@ public class Signature implements Serializable {
   }
 
   public static Signature fromBandana(BandanaManager mgr, String key) {
+    if (mgr.getKeys(GLOBAL_CONTEXT) == null
+        || !Sets.newHashSet(mgr.getKeys(GLOBAL_CONTEXT)).contains(key)) {
+      return null;
+    }
+
     Object value = mgr.getValue(GLOBAL_CONTEXT, key);
 
     if (value == null) {
