@@ -1,9 +1,9 @@
 # Simple Confluence Setup
 
 ```bash
+docker run --name=confluence -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server:latest
 docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 docker inspect postgres # to get IP
-docker run --name=confluence -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server:latest
 ```
 
 Start confluence setup and configure Postgres:
