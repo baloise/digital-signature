@@ -14,6 +14,7 @@ public class DigitalSignatureComponentImpl implements DigitalSignatureComponent 
   @ComponentImport
   private final ApplicationProperties applicationProperties;
 
+  @SuppressWarnings("unused")
   public DigitalSignatureComponentImpl() {
     this(null);
   }
@@ -23,6 +24,7 @@ public class DigitalSignatureComponentImpl implements DigitalSignatureComponent 
     this.applicationProperties = applicationProperties;
   }
 
+  @SuppressWarnings("unused")
   public String getName() {
     if (null != applicationProperties) {
       return "digitalSignatureComponent:" + applicationProperties.getDisplayName();

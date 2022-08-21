@@ -1,8 +1,9 @@
-Setup following a [tutorial from coffeetime.solutions]( http://coffeetime.solutions/run-atlassian-jira-and-confluence-with-postgresql-on-docker/#Overview_of_series_How_to_run_Jira_and_Confluence_behind_NGINX_reverse_proxy_on_Docker):
+# Simple Confluence Setup
 
 ```bash
-docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 docker run --name=confluence -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server:latest
+docker run --name postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+docker inspect postgres # to get IP
 ```
 
 Start confluence setup and configure Postgres:
@@ -11,5 +12,13 @@ Start confluence setup and configure Postgres:
 - user: postgres
 - password: mysecretpassword (defined above)
 
-Skip tutorial
-Create new space "Test"
+Start confluence setup
+- add a new license
+- and configure Postgres connection:
+  - hostname: IP from docker inspect
+  - port: 5432
+  - db: postgres
+  - user: postgres
+  - password: `mysecretpassword` (defined above)
+- Skip tutorial
+- Create new space "Test"

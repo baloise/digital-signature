@@ -3,7 +3,7 @@ package com.baloise.confluence.digitalsignature.rest;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.pages.Page;
 import com.atlassian.confluence.pages.PageManager;
-import com.atlassian.confluence.setup.settings.SettingsManager;
+import com.atlassian.confluence.setup.settings.GlobalSettingsManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.mail.Email;
@@ -43,6 +43,7 @@ import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSIO
 import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
 import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
+import static com.baloise.confluence.digitalsignature.i18n.TextProperties.*;
 import static java.lang.String.format;
 import static java.net.URI.create;
 import static java.util.stream.Collectors.toList;
@@ -56,7 +57,7 @@ import static javax.ws.rs.core.Response.temporaryRedirect;
 public class DigitalSignatureService {
   private static final Logger log = LoggerFactory.getLogger(DigitalSignatureService.class);
   private final BandanaManager bandanaManager;
-  private final SettingsManager settingsManager;
+  private final GlobalSettingsManager settingsManager;
   private final UserManager userManager;
   private final LocalNotificationService notificationService;
   private final MailServerManager mailServerManager;
@@ -65,13 +66,14 @@ public class DigitalSignatureService {
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
 
-  public DigitalSignatureService(@ComponentImport BandanaManager bandanaManager,
-                                 @ComponentImport SettingsManager settingsManager,
-                                 @ComponentImport UserManager userManager,
-                                 @ComponentImport LocalNotificationService notificationService,
-                                 @ComponentImport MailServerManager mailServerManager,
-                                 @ComponentImport PageManager pageManager,
-                                 @ComponentImport I18nResolver i18nResolver) {
+  public DigitalSignatureService(
+      @ComponentImport BandanaManager bandanaManager,
+      @ComponentImport GlobalSettingsManager settingsManager,
+      @ComponentImport UserManager userManager,
+      @ComponentImport LocalNotificationService notificationService,
+      @ComponentImport MailServerManager mailServerManager,
+      @ComponentImport PageManager pageManager,
+      @ComponentImport I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.settingsManager = settingsManager;
     this.userManager = userManager;
@@ -97,7 +99,7 @@ public class DigitalSignatureService {
 
     if (!signature.sign(userName)) {
       status(Response.Status.BAD_REQUEST)
-          .entity(i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.error.badUser", userName, key))
+          .entity(i18nResolver.getText(ERROR_BAD_USER, userName, key))
           .type(MediaType.TEXT_PLAIN)
           .build();
     }
@@ -108,13 +110,19 @@ public class DigitalSignatureService {
       notify(notifiedUser, confluenceUser, signature, baseUrl);
     }
     Page parentPage = pageManager.getPage(signature.getPageId());
-    Page protectedPage = pageManager.getPage(parentPage.getSpaceKey(), signature.getProtectedKey());
-    if (protectedPage != null) {
-      protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, confluenceUser));
-      pageManager.saveContentEntity(protectedPage, null);
+    if (parentPage != null) {
+      Page protectedPage = parentPage.getChildren()
+                                     .stream()
+                                     .filter(p -> signature.getProtectedKey().equals(p.getTitle()))
+                                     .findFirst()
+                                     .orElse(null);
+      if (protectedPage != null) {
+        protectedPage.addPermission(createUserPermission(VIEW_PERMISSION, confluenceUser));
+        pageManager.saveContentEntity(protectedPage, null);
+      }
     }
 
-    URI pageUri = create(settingsManager.getGlobalSettings().getBaseUrl() + "/pages/viewpage.action?pageId=" + signature.getPageId());
+    URI pageUri = create(String.format("%s/pages/viewpage.action?pageId=%d", baseUrl, signature.getPageId()));
     return temporaryRedirect(pageUri).build();
   }
 
@@ -132,11 +140,11 @@ public class DigitalSignatureService {
           signature.getPageId(),
           signature.getTitle()
       );
-      String html = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", user, document);
+      String html = i18nResolver.getText(MESSAGE_HAS_SIGNED_SHORT, user, document);
       if (signature.isMaxSignaturesReached()) {
-        html += "<br/>" + i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.warning.maxSignaturesReached", signature.getMaxSignatures());
+        html += "<br/>" + i18nResolver.getText(WARN_MAX_SIGNATURES_REACHED, signature.getMaxSignatures());
       }
-      String titleText = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", signedUser.getFullName(), signature.getTitle());
+      String titleText = i18nResolver.getText(MESSAGE_HAS_SIGNED_SHORT, signedUser.getFullName(), signature.getTitle());
 
       notificationService.createOrUpdate(notifiedUser,
           new NotificationBuilder()
@@ -215,8 +223,8 @@ public class DigitalSignatureService {
     context.put("signature", signature);
     String signatureText = format("<i>%s</i> ( %s )", signature.getTitle(), signature.getHash());
     String rawTemplate = signed ?
-                             i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.signedUsersEmails") :
-                             i18nResolver.getRawText("com.baloise.confluence.digital-signature.signature.service.message.unsignedUsersEmails");
+                             i18nResolver.getRawText(MESSAGE_SIGNED_USERS_EMAILS) :
+                             i18nResolver.getRawText(MESSAGE_UNSIGNED_USERS_EMAILS);
     context.put("signedOrNotWithHtml", MessageFormat.format(rawTemplate, "<b>", "</b>", signatureText));
     context.put("withNamesChecked", emailOnly ? "" : "checked");
     context.put("signedChecked", signed ? "checked" : "");
