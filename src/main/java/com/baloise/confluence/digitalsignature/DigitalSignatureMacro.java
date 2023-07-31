@@ -1,26 +1,9 @@
 package com.baloise.confluence.digitalsignature;
 
-import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
-import static com.atlassian.confluence.security.ContentPermission.EDIT_PERMISSION;
-import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
-import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
-import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
-import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.InvalidParameterException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.velocity.tools.generic.DateTool;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +32,13 @@ import com.atlassian.user.EntityException;
 import com.atlassian.user.Group;
 import com.atlassian.user.GroupManager;
 import com.atlassian.user.search.page.Pager;
+
+import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
+import static com.atlassian.confluence.security.ContentPermission.*;
+import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
+import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 @Scanned
 public class DigitalSignatureMacro implements Macro {
@@ -185,15 +175,15 @@ public class DigitalSignatureMacro implements Macro {
     }
 
     private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {
-    	try {
-			signature = signature.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new IllegalStateException(e);	
-		}
+        try {
+            signature = signature.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException(e);
+        }
         boolean pendingVisible = isVisible(signature, currentUserName, params.get("pendingVisible"));
         boolean signaturesVisible = isVisible(signature, currentUserName, params.get("signaturesVisible"));
         if (!pendingVisible) signature.setMissingSignatures(new TreeSet<>());
-        if (!signaturesVisible) signature.setSignatures(new HashMap<String, Date>());
+        if (!signaturesVisible) signature.setSignatures(new HashMap<>());
         return pendingVisible && signaturesVisible;
     }
 
