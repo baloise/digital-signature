@@ -59,7 +59,11 @@
         </parameters>
     </xhtml-macro>
 
-    <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">
+    <xstream-security key="xstream-set" name="Signature Class Allowance for Xstream Deserializer">
+        <type>com.baloise.confluence.digitalsignature.Signature</type>
+    </xstream-security>
+    
+    <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">    
         <description>Provides signature services.</description>
         <package>com.baloise.confluence.digitalsignature.rest</package>
     </rest>
