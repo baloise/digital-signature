@@ -82,10 +82,10 @@ public class DigitalSignatureMacro implements Macro {
     }
 
     Set<String> userGroups = getSet(params, "signerGroups");
-    boolean petitionMode = Signature.isPetitionMode(userGroups);
+    boolean petitionMode = Signature2.isPetitionMode(userGroups);
     Set<String> signers = petitionMode ? all : contextHelper.union(getSet(params, "signers"), loadUserGroups(userGroups), loadInheritedSigners(InheritSigners.ofValue(params.get("inheritSigners")), conversionContext));
     ContentEntityObject entity = conversionContext.getEntity();
-    Signature signature = sync(new Signature(entity.getLatestVersionId(), body, params.get("title")).withNotified(getSet(params, "notified")).withMaxSignatures(getLong(params, "maxSignatures", -1)).withVisibilityLimit(getLong(params, "visibilityLimit", -1)), signers);
+    Signature2 signature = sync(new Signature2(entity.getLatestVersionId(), body, params.get("title")).withNotified(getSet(params, "notified")).withMaxSignatures(getLong(params, "maxSignatures", -1)).withVisibilityLimit(getLong(params, "visibilityLimit", -1)), signers);
 
     boolean protectedContent = getBoolean(params, "protectedContent", false);
     if (protectedContent && isPage(conversionContext)) {
@@ -100,7 +100,7 @@ public class DigitalSignatureMacro implements Macro {
   }
 
   @NotNull
-  private Map<String, Object> buildContext(Map<String, String> params, ConversionContext conversionContext, ContentEntityObject page, Signature signature, boolean protectedContent) {
+  private Map<String, Object> buildContext(Map<String, String> params, ConversionContext conversionContext, ContentEntityObject page, Signature2 signature, boolean protectedContent) {
     ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
     String currentUserName = currentUser.getName();
     boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, page) || signature.hasSigned(currentUserName));
@@ -135,7 +135,7 @@ public class DigitalSignatureMacro implements Macro {
     return context;
   }
 
-  private void ensureProtectedPage(ConversionContext conversionContext, Page page, Signature signature) {
+  private void ensureProtectedPage(ConversionContext conversionContext, Page page, Signature2 signature) {
     Page protectedPage = pageManager.getPage(conversionContext.getSpaceKey(), signature.getProtectedKey());
     if (protectedPage == null) {
       ContentPermissionSet editors = page.getContentPermissionSet(EDIT_PERMISSION);
@@ -160,7 +160,7 @@ public class DigitalSignatureMacro implements Macro {
     }
   }
 
-  private boolean hideSignatures(Map<String, String> params, Signature signature, String currentUserName) {
+  private boolean hideSignatures(Map<String, String> params, Signature2 signature, String currentUserName) {
     boolean pendingVisible = isVisible(signature, currentUserName, params.get("pendingVisible"));
     boolean signaturesVisible = isVisible(signature, currentUserName, params.get("signaturesVisible"));
     if (!pendingVisible) signature.setMissingSignatures(new TreeSet<>());
@@ -168,7 +168,7 @@ public class DigitalSignatureMacro implements Macro {
     return pendingVisible && signaturesVisible;
   }
 
-  private boolean isVisible(Signature signature, String currentUserName, String signaturesVisibleParam) {
+  private boolean isVisible(Signature2 signature, String currentUserName, String signaturesVisibleParam) {
     switch (SignaturesVisible.ofValue(signaturesVisibleParam)) {
       case IF_SIGNATORY:
         return signature.hasSigned(currentUserName) || signature.isSignatory(currentUserName);
@@ -268,8 +268,8 @@ public class DigitalSignatureMacro implements Macro {
     return value == null || value.trim().isEmpty() ? new TreeSet<>() : new TreeSet<>(asList(value.split("[;, ]+")));
   }
 
-  private Signature sync(Signature signature, Set<String> signers) {
-    Signature loaded = Signature.fromBandana(this.bandanaManager, signature.getKey());
+  private Signature2 sync(Signature2 signature, Set<String> signers) {
+    Signature2 loaded = Signature2.fromBandana(this.bandanaManager, signature.getKey());
     if (loaded != null) {
       signature.setSignatures(loaded.getSignatures());
       boolean save = false;
@@ -306,9 +306,9 @@ public class DigitalSignatureMacro implements Macro {
     return signature;
   }
 
-  private void save(Signature signature) {
+  private void save(Signature2 signature) {
     if (signature.hasMissingSignatures()) {
-      Signature.toBandana(bandanaManager, signature);
+      Signature2.toBandana(bandanaManager, signature);
     }
   }
 
@@ -322,7 +322,7 @@ public class DigitalSignatureMacro implements Macro {
     return OutputType.BLOCK;
   }
 
-  protected String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature signature) {
+  protected String getMailto(Collection<UserProfile> profiles, String subject, boolean signed, Signature2 signature) {
     if (profiles == null || profiles.isEmpty()) return null;
     Collection<UserProfile> profilesWithMail = profiles.stream().filter(contextHelper::hasEmail).collect(toList());
     StringBuilder ret = new StringBuilder("mailto:");

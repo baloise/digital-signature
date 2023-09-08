@@ -20,13 +20,16 @@ import com.atlassian.sal.api.user.UserProfile;
 import com.atlassian.velocity.htmlsafe.HtmlSafe;
 import com.baloise.confluence.digitalsignature.ContextHelper;
 import com.baloise.confluence.digitalsignature.Markdown;
-import com.baloise.confluence.digitalsignature.Signature;
+import com.baloise.confluence.digitalsignature.Signature2;
 import org.apache.velocity.tools.generic.DateTool;
-import org.jsoup.helper.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -87,9 +90,9 @@ public class DigitalSignatureService {
                        @Context UriInfo uriInfo) {
     ConfluenceUser confluenceUser = AuthenticatedUserThreadLocal.get();
     String userName = confluenceUser.getName();
-    Signature signature = Signature.fromBandana(bandanaManager, key);
+    Signature2 signature = Signature2.fromBandana(bandanaManager, key);
 
-    if (signature == null || StringUtil.isBlank(userName)) {
+    if (signature == null || userName == null || userName.trim().isEmpty()) {
       log.error("Both, a signature and a user name are required to call this method.",
           new NullPointerException(signature == null ? "signature" : "userName"));
       return Response.noContent().build();
@@ -102,7 +105,7 @@ public class DigitalSignatureService {
           .build();
     }
 
-    Signature.toBandana(bandanaManager, key, signature);
+    Signature2.toBandana(bandanaManager, key, signature);
     String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
     for (String notifiedUser : signature.getNotify()) {
       notify(notifiedUser, confluenceUser, signature, baseUrl);
@@ -118,7 +121,7 @@ public class DigitalSignatureService {
     return temporaryRedirect(pageUri).build();
   }
 
-  private void notify(final String notifiedUser, ConfluenceUser signedUser, final Signature signature, final String baseUrl) {
+  private void notify(final String notifiedUser, ConfluenceUser signedUser, final Signature2 signature, final String baseUrl) {
     try {
       UserProfile notifiedUserProfile = contextHelper.getProfileNotNull(userManager, notifiedUser);
 
@@ -171,7 +174,7 @@ public class DigitalSignatureService {
   @Produces("text/html; charset=UTF-8")
   @HtmlSafe
   public String export(@QueryParam("key") final String key) {
-    Signature signature = Signature.fromBandana(bandanaManager, key);
+    Signature2 signature = Signature2.fromBandana(bandanaManager, key);
 
     if (signature == null) {
       log.error("A signature is required to call this method.", new NullPointerException("signature"));
@@ -200,7 +203,7 @@ public class DigitalSignatureService {
                          @QueryParam("signed") final boolean signed,
                          @QueryParam("emailOnly") final boolean emailOnly,
                          @Context UriInfo uriInfo) {
-    Signature signature = Signature.fromBandana(bandanaManager, key);
+    Signature2 signature = Signature2.fromBandana(bandanaManager, key);
 
     if (signature == null) {
       log.error("A signature is required to call this method.", new NullPointerException("signature"));

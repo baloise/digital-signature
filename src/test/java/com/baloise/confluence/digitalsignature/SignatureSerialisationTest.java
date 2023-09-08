@@ -18,7 +18,7 @@ class SignatureSerialisationTest {
   @Test
   void deserialize() throws IOException, ClassNotFoundException {
     ObjectInputStream in = new ObjectInputStream(getClass().getResourceAsStream("/signature.ser"));
-    Signature signature = (Signature) in.readObject();
+    Signature2 signature = (Signature2) in.readObject();
     in.close();
 
     assertAll(
@@ -29,16 +29,16 @@ class SignatureSerialisationTest {
         () -> assertEquals(9999, signature.getSignatures().get("signed1").getTime()),
 
         // assert we can still read the old gson serialization
-        () -> assertEquals(signature, Signature.deserialize(SIG_JSON)),
+        () -> assertEquals(signature, Signature2.deserialize(SIG_JSON)),
 
         // assert that deserialization of the serialization results in the original Signature
-        () -> assertEquals(signature, Signature.deserialize(signature.serialize()))
+        () -> assertEquals(signature, Signature2.deserialize(signature.serialize()))
     );
   }
 
   @Test
   void serialize() throws IOException, ClassNotFoundException {
-    Signature signature = new Signature(123L, "body", "title");
+    Signature2 signature = new Signature2(123L, "body", "title");
     signature.getNotify().add("notify1");
     signature.getMissingSignatures().add("missing1");
     signature.getMissingSignatures().add("missing2");

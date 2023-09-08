@@ -13,7 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class DigitalSignatureMacroTest {
-  private final Signature signature = new Signature(1, "test", "title");
+  private final Signature2 signature = new Signature2(1, "test", "title");
   private final BootstrapManager bootstrapManager = mock(BootstrapManager.class);
   private final BandanaManager bandana = mock(BandanaManager.class);
 

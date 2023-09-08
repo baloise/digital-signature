@@ -68,11 +68,19 @@ public class Signature2 implements Serializable {
       throw new IllegalArgumentException("Value is null in Bandana???");
     }
 
-    if (value instanceof Signature2) {
+    if (value instanceof Signature) {
       // required for downward compatibility - update for next time.
-      Signature2 signature = (Signature2) value;
-      toBandana(mgr, key, signature);
-      return signature;
+      Signature signature = (Signature) value;
+      Signature2 sig = new Signature2(signature.getPageId(), signature.getBody(), signature.getTitle());
+      sig.setSignatures(signature.getSignatures());
+      sig.setMaxSignatures(signature.getMaxSignatures());
+      sig.setHash(signature.getHash());
+      sig.setKey(signature.getKey());
+      sig.setNotify(signature.getNotify());
+      sig.setMissingSignatures(signature.getMissingSignatures());
+      sig.setVisibilityLimit(signature.getVisibilityLimit());
+      toBandana(mgr, key, sig);
+      return sig;
     }
 
     if (value instanceof String) {

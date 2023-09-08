@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+@Deprecated
 public class Signature implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;

@@ -11,7 +11,7 @@ import java.util.function.Function;
 import static java.lang.String.format;
 
 public class ContextHelper {
-  public Object getOrderedSignatures(Signature signature) {
+  public Object getOrderedSignatures(Signature2 signature) {
     SortedSet<Entry<String, Date>> ret = new TreeSet<>(Comparator.comparing((Function<Entry<String, Date>, Date>) Entry::getValue)
                                                                  .thenComparing(Entry::getKey));
     ret.addAll(signature.getSignatures().entrySet());
@@ -38,7 +38,7 @@ public class ContextHelper {
 
   public Map<String, UserProfile> getProfiles(UserManager userManager, Set<String> userNames) {
     Map<String, UserProfile> ret = new HashMap<>();
-    if (Signature.isPetitionMode(userNames)) return ret;
+    if (Signature2.isPetitionMode(userNames)) return ret;
     for (String userName : userNames) {
       ret.put(userName, getProfileNotNull(userManager, userName));
     }
@@ -52,7 +52,7 @@ public class ContextHelper {
 
   public SortedSet<UserProfile> getOrderedProfiles(UserManager userManager, Set<String> userNames) {
     SortedSet<UserProfile> ret = new TreeSet<>(new UserProfileByName());
-    if (Signature.isPetitionMode(userNames)) return ret;
+    if (Signature2.isPetitionMode(userNames)) return ret;
     for (String userName : userNames) {
       ret.add(getProfileNotNull(userManager, userName));
     }
