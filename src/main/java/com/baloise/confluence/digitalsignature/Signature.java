@@ -9,6 +9,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * This class is deprecated and should no longer be used except for downwards compatibility, i.e. reading values from
+ * Bandana that were written with an older version.
+ * <br />
+ * Use @{@link com.baloise.confluence.digitalsignature.Signature2} instead.
+ */
 @Deprecated
 public class Signature implements Serializable, Cloneable {
 
@@ -199,6 +205,6 @@ public class Signature implements Serializable, Cloneable {
 
     @Override
     public Signature clone() throws CloneNotSupportedException{
-    	return (Signature) super.clone();
+        return (Signature) super.clone();
     }
 }

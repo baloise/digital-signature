@@ -63,6 +63,7 @@ class SignatureTest {
   class BandanaWrapperTest {
     private final BandanaManager bandana = mock(DefaultBandanaManager.class);
     private final Signature2 signature = new Signature2(1, "test", "title");
+    private final Signature signatureOld = new Signature(1, "test", "title");
 
     @Test
     void toBandanaFromBandana_readAsWritten() {
@@ -80,7 +81,7 @@ class SignatureTest {
       assertEquals(signature.serialize(), objectCapator.getValue());
 
       when(bandana.getValue(any(), any())).thenCallRealMethod();
-      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature);
+      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature.serialize());
       assertEquals(signature, Signature2.fromBandana(bandana, signature.getKey()));
     }
 
@@ -91,7 +92,7 @@ class SignatureTest {
 
       when(bandana.getKeys(any())).thenReturn(Collections.singletonList(key));
       when(bandana.getValue(any(), any())).thenCallRealMethod();
-      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signature);
+      when(bandana.getValue(any(), eq(key), eq(true))).thenReturn(signatureOld);
 
       assertEquals(signature, Signature2.fromBandana(bandana, signature.getKey()));
     }
