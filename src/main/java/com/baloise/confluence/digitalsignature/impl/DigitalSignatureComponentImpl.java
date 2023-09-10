@@ -11,23 +11,23 @@ import javax.inject.Named;
 @ExportAsService({DigitalSignatureComponent.class})
 @Named("digitalSignatureComponent")
 public class DigitalSignatureComponentImpl implements DigitalSignatureComponent {
-    @ComponentImport
-    private final ApplicationProperties applicationProperties;
+  @ComponentImport
+  private final ApplicationProperties applicationProperties;
 
-    public DigitalSignatureComponentImpl() {
-        this(null);
+  public DigitalSignatureComponentImpl() {
+    this(null);
+  }
+
+  @Inject
+  public DigitalSignatureComponentImpl(final ApplicationProperties applicationProperties) {
+    this.applicationProperties = applicationProperties;
+  }
+
+  public String getName() {
+    if (null != applicationProperties) {
+      return "digitalSignatureComponent:" + applicationProperties.getDisplayName();
     }
 
-    @Inject
-    public DigitalSignatureComponentImpl(final ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-    }
-
-    public String getName() {
-        if (null != applicationProperties) {
-            return "digitalSignatureComponent:" + applicationProperties.getDisplayName();
-        }
-
-        return "digitalSignatureComponent";
-    }
+    return "digitalSignatureComponent";
+  }
 }

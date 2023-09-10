@@ -12,6 +12,15 @@ Allows confluence users to write contracts in a confluence macro which can be si
 - easily send email to signers of the contract
 - receive notifications, when your contract was signed
 
+## ClassCastException issue
+![ClassCastException in Macro](./docs/img/classcastexception.png)
+
+If you observe issues in the Macro resulting in a `ClassCastException` please update digital-signature to version 7.0.5,
+clear the plugin cache (one last time) and restart confluence.
+
+For background information please refer to [#82](https://github.com/baloise/digital-signature/issues/82) 
+and ['How to clear Confluence plugins cache'](https://confluence.atlassian.com/confkb/how-to-clear-confluence-plugins-cache-297664846.html).
+
 ## Privacy Policy
 - We do not transfer or store any data outside your Atlassian product.
 - We have no access to any data you stored within your Atlassian product.
@@ -25,8 +34,6 @@ the [Wiki...](https://github.com/baloise/digital-signature/wiki/Signature-Macro-
 
 ## Using Confluence Data Center Version
 Digital-signature can be used on Confluence Data Center, however it is not yet officially tested and approved.
-When performing an update you might have to invalidate the plugin cache and restart Confluence. For details refer
-to [#68](https://github.com/baloise/digital-signature/issues/68).
 
 ## Feature overview
 ### Insert / edit macro
@@ -45,7 +52,7 @@ to [#68](https://github.com/baloise/digital-signature/issues/68).
 
 ### Mail notification
 ![](./docs/img/report_email_export.png)
-![](./docs/img/send_mail.png.png)
+![](./docs/img/send_mail.png)
 
 ## Contribute
 Keep it simple: every contribution is welcome. Either if you report an issue, help on solving one, or contribute to the
