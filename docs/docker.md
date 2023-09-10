@@ -3,8 +3,18 @@ Setup following a [tutorial from coffeetime.solutions]( http://coffeetime.soluti
 ```bash
 mkdir -p $HOME/docker/volumes/postgres
 mkdir -p $HOME/docker/volumes/confluence
-docker run --name postgres -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres
-docker run --name=confluence -v $HOME/docker/volumes/confluence:/var/atlassian/application-data/confluence -d -p 8090:8090 -p 8091:8091 atlassian/confluence-server:latest
+docker run --name postgres \
+           -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data \
+           -e POSTGRES_PASSWORD=mysecretpassword \
+           -d postgres
+docker run --name=confluence \
+           -v $HOME/docker/volumes/confluence:/var/atlassian/application-data/confluence \
+           -d \
+           -p 8090:8090 \
+           -p 8091:8091 \
+           -p 5005:5005 \
+           -e JVM_SUPPORT_RECOMMENDED_ARGS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
+            atlassian/confluence-server:latest
 docker inspect postgres | grep IPAddress # get the IP address of the postgres container
 ```
 
@@ -16,5 +26,5 @@ Start confluence setup and configure Postgres:
 
 ![](img/db.png)
 
-Skip tutorial
-Create new space "Test"
+- Skip tutorial
+- Create new space "Test"
