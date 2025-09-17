@@ -63,6 +63,37 @@
         <type>com.baloise.confluence.digitalsignature.Signature</type>
     </xstream-security>
     
+    <!-- Velocity method allowlists to fix blocked method invocations -->
+    <velocity-allowlist key="digital-signature-velocity-allowlist" name="Digital Signature Velocity Allowlist" state="enabled">
+        <!-- Signature2 Methods -->
+        <method>com.baloise.confluence.digitalsignature.Signature2#getTitle()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getKey()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getBody()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getPageId()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getMaxSignatures()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getVisibilityLimit()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getSignatures()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getMissingSignatures()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getNotify()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getHash()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#getProtectedKey()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#hasSigned(java.lang.String)</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#isPetitionMode()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#isMaxSignaturesReached()</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#isSignatureMissing(java.lang.String)</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#isSignatory(java.lang.String)</method>
+        <method>com.baloise.confluence.digitalsignature.Signature2#hasMissingSignatures()</method>
+        <!-- Markdown Methods -->
+        <method>com.baloise.confluence.digitalsignature.Markdown#toHTML(java.lang.String)</method>
+        <!-- DummyProfile Methods -->
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getEmail()</method>
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getFullName()</method>
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getUsername()</method>
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getUserKey()</method>
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getProfilePictureUri()</method>
+        <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getProfilePageUri()</method>
+    </velocity-allowlist>
+    
     <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">    
         <description>Provides signature services.</description>
         <package>com.baloise.confluence.digitalsignature.rest</package>
