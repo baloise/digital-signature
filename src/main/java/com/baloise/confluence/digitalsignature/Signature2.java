@@ -1,13 +1,7 @@
 package com.baloise.confluence.digitalsignature;
 
-import com.atlassian.bandana.BandanaManager;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -16,9 +10,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.StreamSupport;
 
-import static com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext.GLOBAL_CONTEXT;
-import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
+import com.atlassian.bandana.BandanaManager;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Getter
@@ -42,7 +43,7 @@ public class Signature2 implements Serializable {
     this.pageId = pageId;
     this.body = body;
     this.title = title == null ? "" : title;
-    this.hash = sha256Hex(pageId + ":" + title + ":" + body);
+    this.hash = sha256Hex(this.pageId + ":" + this.title + ":" + this.body);
     this.key = "signature." + hash;
   }
 
@@ -58,7 +59,8 @@ public class Signature2 implements Serializable {
 
   public static Signature2 fromBandana(BandanaManager mgr, String key) {
     if (mgr.getKeys(GLOBAL_CONTEXT) == null
-        || !Sets.newHashSet(mgr.getKeys(GLOBAL_CONTEXT)).contains(key)) {
+        || !StreamSupport.stream(mgr.getKeys(GLOBAL_CONTEXT).spliterator(), false)
+        .anyMatch(key::equals)) {
       return null;
     }
 
