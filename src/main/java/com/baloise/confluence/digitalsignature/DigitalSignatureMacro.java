@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -106,6 +107,7 @@ public class DigitalSignatureMacro implements Macro {
     return getRenderedTemplate("templates/macro.vm", buildContext(params, conversionContext, entity, signature, protectedContent));
   }
 
+  @NotNull
   private Map<String, Object> buildContext(Map<String, String> params, ConversionContext conversionContext, ContentEntityObject page, Signature2 signature, boolean protectedContent) {
     ConfluenceUser currentUser = AuthenticatedUserThreadLocal.get();
     String currentUserName = currentUser.getName();
