@@ -250,7 +250,7 @@
 		<amps.version>9.5.4</amps.version>
 		<plugin.testrunner.version>2.0.2</plugin.testrunner.version>
 		<osgi.javaconfig.version>0.2.0</osgi.javaconfig.version>
-		<spring.version>5.2.22.RELEASE</spring.version>
+		<spring.version>6.1.20</spring.version>
 
 		<!-- This property ensures consistency between the key in
 		atlassian-plugin.xml and the OSGi bundle's key. -->
