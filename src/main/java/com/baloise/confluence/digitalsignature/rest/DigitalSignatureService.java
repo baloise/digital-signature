@@ -1,38 +1,5 @@
 package com.baloise.confluence.digitalsignature.rest;
 
-import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
-import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
-import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
-import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
-import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
-import static java.lang.String.format;
-import static java.net.URI.create;
-import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.temporaryRedirect;
-
-import java.net.URI;
-import java.text.MessageFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.pages.Page;
 import com.atlassian.confluence.pages.PageManager;
@@ -52,11 +19,42 @@ import com.atlassian.velocity.htmlsafe.HtmlSafe;
 import com.baloise.confluence.digitalsignature.ContextHelper;
 import com.baloise.confluence.digitalsignature.Markdown;
 import com.baloise.confluence.digitalsignature.Signature2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.text.MessageFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+
+import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
+import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
+import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
+import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
+import static java.lang.String.format;
+import static java.net.URI.create;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.temporaryRedirect;
+
+@Component
 @Path("/")
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-@Component
 public class DigitalSignatureService {
   private static final Logger log = LoggerFactory.getLogger(DigitalSignatureService.class);
   private final BandanaManager bandanaManager;
@@ -68,7 +66,7 @@ public class DigitalSignatureService {
   private final I18nResolver i18nResolver;
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
-
+  
   @Autowired
   public DigitalSignatureService(BandanaManager bandanaManager,
                                  SettingsManager settingsManager,
