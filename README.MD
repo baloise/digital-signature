@@ -15,7 +15,7 @@ Allows confluence users to write contracts in a confluence macro which can be si
 ## ClassCastException issue
 ![ClassCastException in Macro](./docs/img/classcastexception.png)
 
-If you observe issues in the Macro resulting in a `ClassCastException` please update digital-signature to version 7.0.6,
+If you observe issues in the Macro resulting in a `ClassCastException` please update digital-signature to version 7.0.7 or later,
 clear the plugin cache (one last time) and restart confluence.
 
 For background information please refer to [#82](https://github.com/baloise/digital-signature/issues/82) 

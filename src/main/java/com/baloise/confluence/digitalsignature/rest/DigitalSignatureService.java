@@ -12,8 +12,6 @@ import com.atlassian.mail.server.MailServerManager;
 import com.atlassian.mail.server.SMTPMailServer;
 import com.atlassian.mywork.model.NotificationBuilder;
 import com.atlassian.mywork.service.LocalNotificationService;
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -21,9 +19,10 @@ import com.atlassian.velocity.htmlsafe.HtmlSafe;
 import com.baloise.confluence.digitalsignature.ContextHelper;
 import com.baloise.confluence.digitalsignature.Markdown;
 import com.baloise.confluence.digitalsignature.Signature2;
-import org.apache.velocity.tools.generic.DateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -52,10 +51,10 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 
+@Component
 @Path("/")
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-@Scanned
 public class DigitalSignatureService {
   private static final Logger log = LoggerFactory.getLogger(DigitalSignatureService.class);
   private final BandanaManager bandanaManager;
@@ -67,14 +66,15 @@ public class DigitalSignatureService {
   private final I18nResolver i18nResolver;
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
-
-  public DigitalSignatureService(@ComponentImport BandanaManager bandanaManager,
-                                 @ComponentImport SettingsManager settingsManager,
-                                 @ComponentImport UserManager userManager,
-                                 @ComponentImport LocalNotificationService notificationService,
-                                 @ComponentImport MailServerManager mailServerManager,
-                                 @ComponentImport PageManager pageManager,
-                                 @ComponentImport I18nResolver i18nResolver) {
+  
+  @Autowired
+  public DigitalSignatureService(BandanaManager bandanaManager,
+                                 SettingsManager settingsManager,
+                                 UserManager userManager,
+                                 LocalNotificationService notificationService,
+                                 MailServerManager mailServerManager,
+                                 PageManager pageManager,
+                                 I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.settingsManager = settingsManager;
     this.userManager = userManager;
@@ -191,7 +191,6 @@ public class DigitalSignatureService {
     context.put("profiles", contextHelper.union(signed, missing));
     context.put("signature", signature);
     context.put("currentDate", new Date());
-    context.put("date", new DateTool());
 
     return getRenderedTemplate("templates/export.vm", context);
   }
@@ -231,7 +230,6 @@ public class DigitalSignatureService {
                                   .map(mapping).collect(toList()));
 
     context.put("currentDate", new Date());
-    context.put("date", new DateTool());
     return Response.ok(getRenderedTemplate("templates/email.vm", context)).build();
   }
 }

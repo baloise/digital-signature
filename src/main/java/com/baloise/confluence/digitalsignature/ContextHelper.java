@@ -1,14 +1,21 @@
 package com.baloise.confluence.digitalsignature;
 
+import static java.lang.String.format;
+
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Function;
+
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.baloise.confluence.digitalsignature.sal.DummyProfile;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.function.Function;
-
-import static java.lang.String.format;
 
 public class ContextHelper {
   public Object getOrderedSignatures(Signature2 signature) {

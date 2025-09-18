@@ -1,9 +1,9 @@
 package com.baloise.confluence.digitalsignature.sal;
 
+import java.net.URI;
+
 import com.atlassian.sal.api.user.UserKey;
 import com.atlassian.sal.api.user.UserProfile;
-
-import java.net.URI;
 
 public class DummyProfile implements UserProfile {
 

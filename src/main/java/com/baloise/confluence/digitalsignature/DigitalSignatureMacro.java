@@ -1,5 +1,30 @@
 package com.baloise.confluence.digitalsignature;
 
+import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
+import static com.atlassian.confluence.security.ContentPermission.EDIT_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
+import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
+import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
+
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
@@ -14,8 +39,6 @@ import com.atlassian.confluence.security.PermissionManager;
 import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -23,23 +46,8 @@ import com.atlassian.user.EntityException;
 import com.atlassian.user.Group;
 import com.atlassian.user.GroupManager;
 import com.atlassian.user.search.page.Pager;
-import org.apache.velocity.tools.generic.DateTool;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidParameterException;
-import java.util.*;
-
-import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
-import static com.atlassian.confluence.security.ContentPermission.*;
-import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-
-@Scanned
+@Component
 public class DigitalSignatureMacro implements Macro {
   private static final int MAX_MAILTO_CHARACTER_COUNT = 500;
   private static final String REST_PATH = "/rest/signature/1.0";
@@ -57,13 +65,13 @@ public class DigitalSignatureMacro implements Macro {
   private final ContextHelper contextHelper = new ContextHelper();
 
   @Autowired
-  public DigitalSignatureMacro(@ComponentImport BandanaManager bandanaManager,
-                               @ComponentImport UserManager userManager,
-                               @ComponentImport BootstrapManager bootstrapManager,
-                               @ComponentImport PageManager pageManager,
-                               @ComponentImport PermissionManager permissionManager,
-                               @ComponentImport GroupManager groupManager,
-                               @ComponentImport I18nResolver i18nResolver) {
+  public DigitalSignatureMacro(BandanaManager bandanaManager,
+                               UserManager userManager,
+                               BootstrapManager bootstrapManager,
+                               PageManager pageManager,
+                               PermissionManager permissionManager,
+                               GroupManager groupManager,
+                               I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.userManager = userManager;
     this.bootstrapManager = bootstrapManager;
@@ -106,7 +114,6 @@ public class DigitalSignatureMacro implements Macro {
     boolean protectedContentAccess = protectedContent && (permissionManager.hasPermission(currentUser, Permission.EDIT, page) || signature.hasSigned(currentUserName));
 
     Map<String, Object> context = defaultVelocityContext();
-    context.put("date", new DateTool());
     context.put("markdown", markdown);
 
     if (signature.isSignatureMissing(currentUserName)) {
