@@ -8,8 +8,8 @@ This guide covers setting up a development environment for the digital-signature
 |----------|-------|
 | Confluence Version | 9.5.4 |
 | AMPS Version | 9.5.4 |
-| Java | 11 |
-| Spring | 6.1.20 |
+| Java | 21 |
+| Spring | 6.1.21 |
 | Build Tool | Maven |
 
 ### Essential Commands
@@ -26,7 +26,7 @@ mvn test                     # Run tests
 
 ### SDKMAN (Java Version Manager)
 
-This project requires Java 11. We use [SDKMAN](https://sdkman.io/) to manage Java versions per-project.
+This project requires Java 21 (Confluence 9.x + atlassian-spring-scanner 6.x require Java 21). We use [SDKMAN](https://sdkman.io/) to manage Java versions per-project.
 
 **Install SDKMAN:**
 ```bash
@@ -34,9 +34,9 @@ curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 ```
 
-**Install Java 11:**
+**Install Java 21:**
 ```bash
-sdk install java 11.0.25-tem
+sdk install java 21.0.9-tem
 ```
 
 **Enable automatic version switching:**
@@ -51,7 +51,7 @@ Or run:
 sed -i '' 's/sdkman_auto_env=false/sdkman_auto_env=true/' ~/.sdkman/etc/config
 ```
 
-This project includes a `.sdkmanrc` file. With `auto_env` enabled, SDKMAN automatically switches to Java 11 when you enter the project directory.
+This project includes a `.sdkmanrc` file. With `auto_env` enabled, SDKMAN automatically switches to Java 21 when you enter the project directory.
 
 **Note:** After changing the config, open a new terminal or reload SDKMAN in your current shell:
 ```bash
@@ -62,7 +62,7 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 ```bash
 cd src && cd ..
 java -version
-# Should show: openjdk version "11.x.x"
+# Should show: openjdk version "21.x.x"
 ```
 
 ### Atlassian SDK
