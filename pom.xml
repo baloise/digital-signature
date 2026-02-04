@@ -208,11 +208,11 @@
 		<plugins>
 			<plugin>
 				<groupId>com.atlassian.maven.plugins</groupId>
-				<artifactId>refapp-maven-plugin</artifactId>
+				<artifactId>confluence-maven-plugin</artifactId>
 				<version>${amps.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<productVersion>${refapp.version}</productVersion>
+					<productVersion>${confluence.version}</productVersion>
 					<enableQuickReload>true</enableQuickReload>
 
 					<!-- See here for an explanation of default instructions: -->
@@ -286,7 +286,7 @@
 
 	<properties>
 		<platform.version>6.1.14</platform.version>
-		<refapp.version>9.2.5</refapp.version>
+		<confluence.version>9.5.4</confluence.version>
 		<amps.version>9.5.4</amps.version>
 		<plugin.testrunner.version>2.0.2</plugin.testrunner.version>
 		<osgi.javaconfig.version>0.2.0</osgi.javaconfig.version>
