@@ -18,15 +18,15 @@ podman run --name postgres \
   -e POSTGRES_PASSWORD=mysecretpassword \
   -d postgres
 
-# Run confluence in the pod with appropriate memory settings
+# Run confluence in the pod 
 podman run --name=confluence \
   --pod confluence-pod \
   -v confluence-data:/var/atlassian/application-data/confluence \
   -d \
   -e JVM_MINIMUM_MEMORY=1536m \
   -e JVM_MAXIMUM_MEMORY=1536m \
-  -e JVM_SUPPORT_RECOMMENDED_ARGS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
-  atlassian/confluence-server:latest
+  -e JVM_SUPPORT_RECOMMENDED_ARGS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Datlassian.upm.signature.check.disabled=true -Dupm.plugin.upload.enabled=true" \
+  atlassian/confluence:latest
 ```
 
 ## Confluence Setup Instructions:
@@ -43,6 +43,10 @@ podman run --name=confluence \
 ## Useful Commands:
 
 ```bash
+
+# Start podman
+podman start podman-machine-default
+
 # View running containers
 podman ps
 
@@ -171,6 +175,29 @@ If you're coming from Docker:
 - `docker-compose` → `podman-compose` or use pods
 - On macOS, both use a VM, but Podman is daemonless
 - Podman pods = multiple containers sharing network namespace (like Kubernetes pods)
+
+## Automated Version Testing:
+
+The `scripts/test-plugin.sh` script automates testing the plugin against specific Confluence versions:
+
+```bash
+# Start a Confluence instance at a specific version
+./scripts/test-plugin.sh start 9.3.2
+
+# After completing the setup wizard manually, upload the plugin
+./scripts/test-plugin.sh upload 9.3.2
+
+# Verify the plugin is installed and enabled
+./scripts/test-plugin.sh verify 9.3.2
+
+# View logs for troubleshooting
+./scripts/test-plugin.sh logs 9.3.2
+
+# Clean up when done
+./scripts/test-plugin.sh teardown 9.3.2
+```
+
+Each version gets its own pod and volumes (e.g., `confluence-test-9.3.2`, `postgres-data-9.3.2`), so multiple versions can be tested independently.
 
 ## Tips for Beginners:
 

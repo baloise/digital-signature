@@ -22,9 +22,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
@@ -47,7 +44,6 @@ import com.atlassian.user.Group;
 import com.atlassian.user.GroupManager;
 import com.atlassian.user.search.page.Pager;
 
-@Component
 public class DigitalSignatureMacro implements Macro {
   private static final int MAX_MAILTO_CHARACTER_COUNT = 500;
   private static final String REST_PATH = "/rest/signature/1.0";
@@ -64,7 +60,6 @@ public class DigitalSignatureMacro implements Macro {
   private final Set<String> all = new HashSet<>();
   private final ContextHelper contextHelper = new ContextHelper();
 
-  @Autowired
   public DigitalSignatureMacro(BandanaManager bandanaManager,
                                UserManager userManager,
                                BootstrapManager bootstrapManager,

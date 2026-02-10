@@ -71,7 +71,7 @@
 		<dependency>
 			<groupId>com.atlassian.plugin</groupId>
 			<artifactId>atlassian-spring-scanner-annotation</artifactId>
-			<version>6.0.0</version>
+			<version>5.1.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -90,12 +90,6 @@
 			<artifactId>sal-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.atlassian.plugins</groupId>
-			<artifactId>atlassian-plugins-osgi-javaconfig</artifactId>
-			<version>${osgi.javaconfig.version}</version>
-		</dependency>
-		<!-- OSGi Java Config dependencies -->
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
@@ -221,20 +215,23 @@
 					<instructions>
 						<Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
 
-						<!-- Add package to export here -->
-						<Export-Package>
-							com.baloise.confluence.digitalsignature.api,
-						</Export-Package>
+						<!-- No packages exported - this is a UI plugin only -->
 
 						<!-- Add package import here -->
 						<Import-Package>
 							org.springframework.osgi.*;resolution:="optional",
 							org.eclipse.gemini.blueprint.*;resolution:="optional",
+							com.atlassian.mywork.*;resolution:="optional",
+							com.google.gson.*;resolution:="optional",
+							org.jetbrains.annotations.*;resolution:="optional",
 							com.sun.mail.imap,
 							com.sun.mail.smtp,
 							com.sun.mail.pop3,
 							*
 						</Import-Package>
+
+						<!-- Access Confluence-internal packages like Gson -->
+						<DynamicImport-Package>com.google.gson,com.google.gson.*</DynamicImport-Package>
 
 						<!-- Ensure plugin is spring powered -->
 						<Spring-Context>*</Spring-Context>
@@ -252,6 +249,28 @@
 </execution>
 </executions>
 -->
+			</plugin>
+
+			<!-- Unpack flexmark compile-scope dependencies into target/classes
+			     so they get bundled into the OSGi plugin JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.6.1</version>
+				<executions>
+					<execution>
+						<id>unpack-flexmark</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeGroupIds>com.vladsch.flexmark</includeGroupIds>
+							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+							<excludes>META-INF/**</excludes>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<!-- Maven Surefire Plugin for running tests with module access
@@ -289,7 +308,6 @@
 		<confluence.version>9.5.4</confluence.version>
 		<amps.version>9.5.4</amps.version>
 		<plugin.testrunner.version>2.0.2</plugin.testrunner.version>
-		<osgi.javaconfig.version>0.2.0</osgi.javaconfig.version>
 		<spring.version>6.1.21</spring.version>
 
 		<!-- This property ensures consistency between the key in
@@ -299,5 +317,41 @@
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>confluence10</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.transformer</groupId>
+						<artifactId>transformer-maven-plugin</artifactId>
+						<version>0.5.0</version>
+						<configuration>
+							<rules>
+								<renames>${project.basedir}/etc/jakarta-renames.properties</renames>
+							</rules>
+							<packagingTypes>
+								<packagingType>atlassian-plugin</packagingType>
+							</packagingTypes>
+							<overwrite>true</overwrite>
+						</configuration>
+						<executions>
+							<execution>
+								<id>transform-jakarta</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>transform</goal>
+								</goals>
+								<configuration>
+									<transformDirectory>${project.build.outputDirectory}</transformDirectory>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

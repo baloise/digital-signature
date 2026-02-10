@@ -10,8 +10,6 @@ import com.atlassian.mail.Email;
 import com.atlassian.mail.MailException;
 import com.atlassian.mail.server.MailServerManager;
 import com.atlassian.mail.server.SMTPMailServer;
-import com.atlassian.mywork.model.NotificationBuilder;
-import com.atlassian.mywork.service.LocalNotificationService;
 import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -21,9 +19,6 @@ import com.baloise.confluence.digitalsignature.Markdown;
 import com.baloise.confluence.digitalsignature.Signature2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -37,21 +32,18 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 import static com.atlassian.confluence.renderer.radeox.macros.MacroUtils.defaultVelocityContext;
 import static com.atlassian.confluence.security.ContentPermission.VIEW_PERMISSION;
 import static com.atlassian.confluence.security.ContentPermission.createUserPermission;
 import static com.atlassian.confluence.util.velocity.VelocityUtils.getRenderedTemplate;
-import static com.baloise.confluence.digitalsignature.api.DigitalSignatureComponent.PLUGIN_KEY;
 import static java.lang.String.format;
 import static java.net.URI.create;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 
-@Component
 @Path("/")
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -60,25 +52,21 @@ public class DigitalSignatureService {
   private final BandanaManager bandanaManager;
   private final SettingsManager settingsManager;
   private final UserManager userManager;
-  private final LocalNotificationService notificationService;
   private final MailServerManager mailServerManager;
   private final PageManager pageManager;
   private final I18nResolver i18nResolver;
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
   
-  @Autowired
   public DigitalSignatureService(BandanaManager bandanaManager,
                                  SettingsManager settingsManager,
                                  UserManager userManager,
-                                 LocalNotificationService notificationService,
                                  MailServerManager mailServerManager,
                                  PageManager pageManager,
                                  I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.settingsManager = settingsManager;
     this.userManager = userManager;
-    this.notificationService = notificationService;
     this.mailServerManager = mailServerManager;
     this.pageManager = pageManager;
     this.i18nResolver = i18nResolver;
@@ -141,15 +129,8 @@ public class DigitalSignatureService {
       }
       String titleText = i18nResolver.getText("com.baloise.confluence.digital-signature.signature.service.message.hasSignedShort", signedUser.getFullName(), signature.getTitle());
 
-      notificationService.createOrUpdate(notifiedUser,
-          new NotificationBuilder()
-              .application(PLUGIN_KEY) // a unique key that identifies your plugin
-              .title(titleText)
-              .itemTitle(titleText)
-              .description(html)
-              .groupingId(PLUGIN_KEY + "-signature") // a key to aggregate notifications
-              .createNotification()).get();
-
+      // Note: WorkBox (LocalNotificationService) was removed in Confluence 9.x
+      // Notifications now use email only
       SMTPMailServer mailServer = mailServerManager.getDefaultSMTPMailServer();
 
       if (mailServer == null) {
@@ -164,7 +145,7 @@ public class DigitalSignatureService {
                 .setMimeType("text/html")
         );
       }
-    } catch (IllegalArgumentException | InterruptedException | MailException | ExecutionException e) {
+    } catch (IllegalArgumentException | MailException e) {
       log.error("Could not send notification to " + notifiedUser, e);
     }
   }

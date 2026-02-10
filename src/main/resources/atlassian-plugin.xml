@@ -25,8 +25,8 @@
     </web-resource>
 
     <xhtml-macro name="signature"
-                 class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro"
                  key="digital-signature"
+                 class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro"
                  icon="/download/resources/${project.groupId}.${project.artifactId}/images/macro-icon.png"
                  documentation-url="https://github.com/baloise/digital-signature/wiki/Signature-Macro-Usage"
     >
@@ -94,7 +94,7 @@
         <method>com.baloise.confluence.digitalsignature.sal.DummyProfile#getProfilePageUri()</method>
     </velocity-allowlist>
     
-    <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">    
+    <rest key="com.baloise.confluence:digital-signature" path="/signature" version="1.0">
         <description>Provides signature services.</description>
         <package>com.baloise.confluence.digitalsignature.rest</package>
     </rest>

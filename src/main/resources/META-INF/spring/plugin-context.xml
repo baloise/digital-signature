@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:osgi="http://www.eclipse.org/gemini/blueprint/schema/blueprint"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/context
-        http://www.springframework.org/schema/context/spring-context.xsd">
-    <!-- Package with Spring configuration -->
-    <context:component-scan base-package="com.baloise.confluence.digitalsignature.config" />
-    <!-- Include REST services in component scan -->
-    <context:component-scan base-package="com.baloise.confluence.digitalsignature.rest" />
+        http://www.eclipse.org/gemini/blueprint/schema/blueprint
+        http://www.eclipse.org/gemini/blueprint/schema/blueprint/gemini-blueprint.xsd">
+
+    <!-- Import OSGi services -->
+    <osgi:reference id="bandanaManager" interface="com.atlassian.bandana.BandanaManager" />
+    <osgi:reference id="salUserManager" interface="com.atlassian.sal.api.user.UserManager" />
+    <osgi:reference id="bootstrapManager" interface="com.atlassian.confluence.setup.BootstrapManager" />
+    <osgi:reference id="pageManager" interface="com.atlassian.confluence.pages.PageManager" />
+    <osgi:reference id="permissionManager" interface="com.atlassian.confluence.security.PermissionManager" />
+    <osgi:reference id="groupManager" interface="com.atlassian.user.GroupManager" />
+    <osgi:reference id="i18nResolver" interface="com.atlassian.sal.api.message.I18nResolver" />
+    <osgi:reference id="settingsManager" interface="com.atlassian.confluence.setup.settings.SettingsManager" />
+    <osgi:reference id="mailServerManager" interface="com.atlassian.mail.server.MailServerManager" />
+
+    <!-- Define plugin beans with constructor injection -->
+    <bean id="digitalSignatureMacro" class="com.baloise.confluence.digitalsignature.DigitalSignatureMacro">
+        <constructor-arg ref="bandanaManager" />
+        <constructor-arg ref="salUserManager" />
+        <constructor-arg ref="bootstrapManager" />
+        <constructor-arg ref="pageManager" />
+        <constructor-arg ref="permissionManager" />
+        <constructor-arg ref="groupManager" />
+        <constructor-arg ref="i18nResolver" />
+    </bean>
+
+    <bean id="digitalSignatureService" class="com.baloise.confluence.digitalsignature.rest.DigitalSignatureService">
+        <constructor-arg ref="bandanaManager" />
+        <constructor-arg ref="settingsManager" />
+        <constructor-arg ref="salUserManager" />
+        <constructor-arg ref="mailServerManager" />
+        <constructor-arg ref="pageManager" />
+        <constructor-arg ref="i18nResolver" />
+    </bean>
 </beans>
