@@ -75,6 +75,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.atlassian</groupId>
+			<artifactId>atlassian-app-cloud-migration-listener</artifactId>
+			<version>1.8.7</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
@@ -224,6 +230,7 @@
 							com.atlassian.mywork.*;resolution:="optional",
 							com.google.gson.*;resolution:="optional",
 							org.jetbrains.annotations.*;resolution:="optional",
+							com.atlassian.migration.app.*;resolution:="optional",
 							com.sun.mail.imap,
 							com.sun.mail.smtp,
 							com.sun.mail.pop3,

@@ -99,4 +99,5 @@
         <package>com.baloise.confluence.digitalsignature.rest</package>
     </rest>
 
+
 </atlassian-plugin>
