@@ -39,12 +39,38 @@ class DigitalSignatureMigrationListenerTest {
     }
 
     @Test
-    void macroMapping_returnsCorrectMapping() {
+    void canonicalIdentifiers_matchExpectedValues() {
+        assertAll(
+            () -> assertEquals(
+                "com.baloise.confluence.digital-signature",
+                listener.getCloudAppKey()
+            ),
+            () -> assertEquals(
+                "com.baloise.confluence.digital-signature",
+                listener.getServerAppKey()
+            ),
+            () -> assertEquals(
+                "bab5617e-dc42-4ca8-ad38-947c826fe58c",
+                listener.getForgeAppId().toString()
+            ),
+            () -> assertEquals(
+                "digital-signature",
+                DigitalSignatureMigrationListener.SERVER_MACRO_KEY
+            ),
+            () -> assertEquals(
+                "digital-signature",
+                DigitalSignatureMigrationListener.FORGE_MACRO_KEY
+            )
+        );
+    }
+
+    @Test
+    void macroMapping_returnsIdentityMappingForCanonicalMacroKey() {
         Map<String, String> mapping = listener.getServerToForgeMacroMapping();
         assertEquals(1, mapping.size());
         assertEquals(
-            DigitalSignatureMigrationListener.FORGE_MACRO_KEY,
-            mapping.get(DigitalSignatureMigrationListener.SERVER_MACRO_KEY)
+            "digital-signature",
+            mapping.get("digital-signature")
         );
     }
 

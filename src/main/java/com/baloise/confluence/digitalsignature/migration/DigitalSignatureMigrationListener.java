@@ -45,7 +45,7 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
     static final String SERVER_APP_KEY = "com.baloise.confluence.digital-signature";
     // Server macro key (macro name in atlassian-plugin.xml) → Forge macro key
     static final String SERVER_MACRO_KEY = "digital-signature";
-    static final String FORGE_MACRO_KEY = "digital-signature-confluence-cloud-culmat";
+    static final String FORGE_MACRO_KEY = "digital-signature";
 
     private final BandanaManager bandanaManager;
 
@@ -65,7 +65,7 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
 
     @Override
     public String getCloudAppKey() {
-        return "com.baloise.confluence.digital-signature";
+        return SERVER_APP_KEY;
     }
 
     @Override
