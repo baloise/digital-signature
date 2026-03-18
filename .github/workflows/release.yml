@@ -26,29 +26,30 @@ jobs:
     - name: Build for Confluence 9
       run: mvn -B clean package --file pom.xml
 
-    - name: Rename Confluence 9 artifacts
+    - name: Save Confluence 9 artifacts
       run: |
         VERSION=${{ steps.version.outputs.VERSION }}
-        cp target/digital-signature-${VERSION}.jar target/digital-signature-${VERSION}-confluence9.jar
-        cp target/digital-signature-${VERSION}.obr target/digital-signature-${VERSION}-confluence9.obr
+        mkdir -p staging
+        cp target/digital-signature-${VERSION}.jar staging/digital-signature-${VERSION}-confluence9.jar
+        cp target/digital-signature-${VERSION}.obr staging/digital-signature-${VERSION}-confluence9.obr
 
     - name: Build for Confluence 10
       run: mvn -B clean package -Pconfluence10 --file pom.xml
 
-    - name: Rename Confluence 10 artifacts
+    - name: Save Confluence 10 artifacts
       run: |
         VERSION=${{ steps.version.outputs.VERSION }}
-        cp target/digital-signature-${VERSION}.jar target/digital-signature-${VERSION}-confluence10.jar
-        cp target/digital-signature-${VERSION}.obr target/digital-signature-${VERSION}-confluence10.obr
+        cp target/digital-signature-${VERSION}.jar staging/digital-signature-${VERSION}-confluence10.jar
+        cp target/digital-signature-${VERSION}.obr staging/digital-signature-${VERSION}-confluence10.obr
 
     - name: Release using Github CLI
       run: |
         VERSION=${{ steps.version.outputs.VERSION }}
         gh release create ${GITHUB_REF##*/} \
-          ./target/digital-signature-${VERSION}-confluence9.jar \
-          ./target/digital-signature-${VERSION}-confluence9.obr \
-          ./target/digital-signature-${VERSION}-confluence10.jar \
-          ./target/digital-signature-${VERSION}-confluence10.obr \
+          ./staging/digital-signature-${VERSION}-confluence9.jar \
+          ./staging/digital-signature-${VERSION}-confluence9.obr \
+          ./staging/digital-signature-${VERSION}-confluence10.jar \
+          ./staging/digital-signature-${VERSION}-confluence10.obr \
           -t "Release ${GITHUB_REF##*/}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,10 +57,8 @@ jobs:
     - name: Copy artifacts
       run: |
         mkdir artifacts
-        cp target/*-confluence9.jar artifacts/
-        cp target/*-confluence9.obr artifacts/
-        cp target/*-confluence10.jar artifacts/
-        cp target/*-confluence10.obr artifacts/
+        cp staging/*.jar artifacts/
+        cp staging/*.obr artifacts/
         ls artifacts
 
     - name: Deploy to gh-pages
