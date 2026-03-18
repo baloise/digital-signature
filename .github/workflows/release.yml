@@ -10,45 +10,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source 🛎️
-      uses: actions/checkout@v2
+    - name: Checkout Source
+      uses: actions/checkout@v4
 
     - name: Set up Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
-        'distribution': adopt
-        java-version: '11'
+        distribution: temurin
+        java-version: '17'
 
-    - name: Build with Maven 🔧
-      run: mvn -B package --file pom.xml
+    - name: Get project version
+      id: version
+      run: echo "VERSION=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout --file pom.xml)" >> $GITHUB_OUTPUT
 
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Artifacts
-        path: |
-          ./target/*.jar
-          ./target/*.obr
+    - name: Build for Confluence 9
+      run: mvn -B clean package --file pom.xml
+
+    - name: Rename Confluence 9 artifacts
+      run: |
+        VERSION=${{ steps.version.outputs.VERSION }}
+        cp target/digital-signature-${VERSION}.jar target/digital-signature-${VERSION}-confluence9.jar
+        cp target/digital-signature-${VERSION}.obr target/digital-signature-${VERSION}-confluence9.obr
+
+    - name: Build for Confluence 10
+      run: mvn -B clean package -Pconfluence10 --file pom.xml
+
+    - name: Rename Confluence 10 artifacts
+      run: |
+        VERSION=${{ steps.version.outputs.VERSION }}
+        cp target/digital-signature-${VERSION}.jar target/digital-signature-${VERSION}-confluence10.jar
+        cp target/digital-signature-${VERSION}.obr target/digital-signature-${VERSION}-confluence10.obr
 
     - name: Release using Github CLI
-      run: gh release create ${GITHUB_REF##*/} ./target/*.jar ./target/*.obr -t "Release ${GITHUB_REF##*/}"
+      run: |
+        VERSION=${{ steps.version.outputs.VERSION }}
+        gh release create ${GITHUB_REF##*/} \
+          ./target/digital-signature-${VERSION}-confluence9.jar \
+          ./target/digital-signature-${VERSION}-confluence9.obr \
+          ./target/digital-signature-${VERSION}-confluence10.jar \
+          ./target/digital-signature-${VERSION}-confluence10.obr \
+          -t "Release ${GITHUB_REF##*/}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Copy artifacts
       run: |
         mkdir artifacts
-        cp target/*.jar artifacts/
-        cp target/*.obr artifacts/
-        rm artifacts/*-tests.jar
+        cp target/*-confluence9.jar artifacts/
+        cp target/*-confluence9.obr artifacts/
+        cp target/*-confluence10.jar artifacts/
+        cp target/*-confluence10.obr artifacts/
         ls artifacts
 
-    - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@3.7.1
+    - name: Deploy to gh-pages
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: artifacts
-        CLEAN: false
-        TARGET_FOLDER: ${GITHUB_REF##*/}
-        COMMIT_MESSAGE: Releasing tag/branch ${GITHUB_REF##*/}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: artifacts
+        clean: false
+        target-folder: ${{ github.ref_name }}
+        commit-message: Releasing ${{ github.ref_name }}
