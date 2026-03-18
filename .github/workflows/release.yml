@@ -19,54 +19,74 @@ jobs:
         distribution: temurin
         java-version: '17'
 
-    - name: Get project version
+    - name: Get versions
       id: version
-      run: echo "VERSION=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout --file pom.xml)" >> $GITHUB_OUTPUT
+      run: |
+        C9=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout --file pom.xml)
+        echo "C9_VERSION=${C9}" >> $GITHUB_OUTPUT
+        echo "C10_VERSION=10.${C9#*.}" >> $GITHUB_OUTPUT
 
     - name: Build for Confluence 9
       run: mvn -B clean package --file pom.xml
 
     - name: Save Confluence 9 artifacts
       run: |
-        VERSION=${{ steps.version.outputs.VERSION }}
         mkdir -p staging
-        cp target/digital-signature-${VERSION}.jar staging/digital-signature-${VERSION}-confluence9.jar
-        cp target/digital-signature-${VERSION}.obr staging/digital-signature-${VERSION}-confluence9.obr
+        cp target/digital-signature-${{ steps.version.outputs.C9_VERSION }}.jar staging/
+        cp target/digital-signature-${{ steps.version.outputs.C9_VERSION }}.obr staging/
+
+    - name: Set version for Confluence 10
+      run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.C10_VERSION }} -DgenerateBackupPoms=false
 
     - name: Build for Confluence 10
       run: mvn -B clean package -Pconfluence10 --file pom.xml
 
     - name: Save Confluence 10 artifacts
       run: |
-        VERSION=${{ steps.version.outputs.VERSION }}
-        cp target/digital-signature-${VERSION}.jar staging/digital-signature-${VERSION}-confluence10.jar
-        cp target/digital-signature-${VERSION}.obr staging/digital-signature-${VERSION}-confluence10.obr
+        cp target/digital-signature-${{ steps.version.outputs.C10_VERSION }}.jar staging/
+        cp target/digital-signature-${{ steps.version.outputs.C10_VERSION }}.obr staging/
 
     - name: Release using Github CLI
       run: |
-        VERSION=${{ steps.version.outputs.VERSION }}
+        C9=${{ steps.version.outputs.C9_VERSION }}
+        C10=${{ steps.version.outputs.C10_VERSION }}
         gh release create ${GITHUB_REF##*/} \
-          ./staging/digital-signature-${VERSION}-confluence9.jar \
-          ./staging/digital-signature-${VERSION}-confluence9.obr \
-          ./staging/digital-signature-${VERSION}-confluence10.jar \
-          ./staging/digital-signature-${VERSION}-confluence10.obr \
-          -t "Release ${GITHUB_REF##*/}"
+          ./staging/digital-signature-${C9}.jar \
+          ./staging/digital-signature-${C9}.obr \
+          ./staging/digital-signature-${C10}.jar \
+          ./staging/digital-signature-${C10}.obr \
+          -t "Release ${GITHUB_REF##*/} (Confluence 9: ${C9}, Confluence 10: ${C10})"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Copy artifacts
+    - name: Prepare Confluence 9 gh-pages folder
       run: |
-        mkdir artifacts
-        cp staging/*.jar artifacts/
-        cp staging/*.obr artifacts/
-        ls artifacts
+        mkdir c9-deploy
+        cp staging/digital-signature-${{ steps.version.outputs.C9_VERSION }}.jar c9-deploy/
+        cp staging/digital-signature-${{ steps.version.outputs.C9_VERSION }}.obr c9-deploy/
 
-    - name: Deploy to gh-pages
+    - name: Deploy Confluence 9 to gh-pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: gh-pages
-        folder: artifacts
-        clean: false
-        target-folder: ${{ github.ref_name }}
-        commit-message: Releasing ${{ github.ref_name }}
+        folder: c9-deploy
+        clean: true
+        target-folder: ${{ steps.version.outputs.C9_VERSION }}
+        commit-message: Release ${{ steps.version.outputs.C9_VERSION }}
+
+    - name: Prepare Confluence 10 gh-pages folder
+      run: |
+        mkdir c10-deploy
+        cp staging/digital-signature-${{ steps.version.outputs.C10_VERSION }}.jar c10-deploy/
+        cp staging/digital-signature-${{ steps.version.outputs.C10_VERSION }}.obr c10-deploy/
+
+    - name: Deploy Confluence 10 to gh-pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: c10-deploy
+        clean: true
+        target-folder: ${{ steps.version.outputs.C10_VERSION }}
+        commit-message: Release ${{ steps.version.outputs.C10_VERSION }}
