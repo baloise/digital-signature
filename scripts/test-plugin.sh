@@ -3,9 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-JAR_PATH="$PROJECT_DIR/target/digital-signature-9.0.1.jar"
 PLUGIN_KEY="com.baloise.confluence.digital-signature"
-BASE_URL="http://localhost:8090"
 ADMIN_USER="admin"
 ADMIN_PASS="admin"
 
@@ -14,17 +12,32 @@ usage() {
 Usage: $0 <command> <confluence-version>
 
 Commands:
-  start     Create pod with PostgreSQL + Confluence at the given version
+  build     Build the plugin JAR and copy it to staging/
+  start     Create docker network with PostgreSQL + Confluence at the given version
   logs      Tail Confluence logs
-  upload    Upload plugin JAR via UPM REST API
+  upload    Upload the newest JAR from staging/ matching the major version
   verify    Check plugin is installed and enabled
-  teardown  Remove pod, containers, and volumes
+  teardown  Remove containers, network, and volumes
+
+The upload command picks the most recently built JAR from staging/ that
+matches the Confluence major version (e.g. staging/digital-signature-9.*.jar).
+Run 'build' first to populate staging/.
+
+Ports are derived from the major version (V9 -> 9090, V10 -> 10090):
+  V9:  HTTP 9090,  sync 9091,  debug 9005
+  V10: HTTP 10090, sync 10091, debug 10005
+
+During Confluence setup, use JDBC URL:
+  jdbc:postgresql://<postgres-container>:5432/postgres
+  e.g. jdbc:postgresql://postgres-9.5.4:5432/postgres
 
 Examples:
-  $0 start 9.3.2
-  $0 upload 9.3.2
-  $0 verify 9.3.2
-  $0 teardown 9.3.2
+  $0 build 9.5.4        # Build v9 plugin -> staging/
+  $0 build 10.2.7       # Build v10 plugin -> staging/
+  $0 start 9.5.4 &      # Start on port 9090 (background)
+  $0 start 10.2.7 &     # Start on port 10090 (background)
+  $0 upload 9.5.4       # Upload newest staging/digital-signature-9.*.jar
+  $0 upload 10.2.7      # Upload newest staging/digital-signature-10.*.jar
 EOF
     exit 1
 }
@@ -34,44 +47,92 @@ EOF
 COMMAND="$1"
 CONFLUENCE_VERSION="$2"
 
-POD_NAME="confluence-test-${CONFLUENCE_VERSION}"
-POSTGRES_VOL="postgres-data-${CONFLUENCE_VERSION}"
-CONFLUENCE_VOL="confluence-data-${CONFLUENCE_VERSION}"
-CONTAINER_POSTGRES="postgres-${CONFLUENCE_VERSION}"
-CONTAINER_CONFLUENCE="confluence-${CONFLUENCE_VERSION}"
+CONFLUENCE_MAJOR="${CONFLUENCE_VERSION%%.*}"
+HOST_PORT=$((CONFLUENCE_MAJOR * 1000 + 90))
+SYNC_PORT=$((CONFLUENCE_MAJOR * 1000 + 91))
+DEBUG_PORT=$((CONFLUENCE_MAJOR * 1000 + 5))
+BASE_URL="http://localhost:${HOST_PORT}"
+
+NETWORK_NAME="ds-net-${CONFLUENCE_VERSION}"
+POSTGRES_VOL="ds-pgdata-${CONFLUENCE_VERSION}"
+CONFLUENCE_VOL="ds-confdata-${CONFLUENCE_VERSION}"
+CONTAINER_POSTGRES="ds-postgres-${CONFLUENCE_VERSION}"
+CONTAINER_CONFLUENCE="ds-confluence-${CONFLUENCE_VERSION}"
+
+resolve_jar() {
+    JAR_PATH=""
+    local newest=""
+    local newest_ts=0
+    for f in "$PROJECT_DIR"/staging/digital-signature-"${CONFLUENCE_MAJOR}".*.jar; do
+        [ -f "$f" ] || continue
+        local ts
+        ts=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null || echo 0)
+        if [ "$ts" -gt "$newest_ts" ]; then
+            newest_ts="$ts"
+            newest="$f"
+        fi
+    done
+    JAR_PATH="$newest"
+}
+
+cmd_build() {
+    echo "==> Building plugin for Confluence ${CONFLUENCE_MAJOR}"
+    local c9_version
+    c9_version=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout --file "$PROJECT_DIR/pom.xml")
+
+    if [ "$CONFLUENCE_MAJOR" = "9" ]; then
+        mvn -B clean package -DskipTests --file "$PROJECT_DIR/pom.xml"
+    elif [ "$CONFLUENCE_MAJOR" = "10" ]; then
+        local c10_version="10.${c9_version#*.}"
+        echo "==> Setting version to ${c10_version} for Confluence 10 build"
+        mvn -B versions:set -DnewVersion="$c10_version" -DgenerateBackupPoms=false --file "$PROJECT_DIR/pom.xml"
+        mvn -B clean package -Pconfluence10 -DskipTests --file "$PROJECT_DIR/pom.xml"
+        mvn -B versions:set -DnewVersion="$c9_version" -DgenerateBackupPoms=false --file "$PROJECT_DIR/pom.xml"
+    else
+        echo "==> ERROR: Unsupported major version: ${CONFLUENCE_MAJOR}"
+        exit 1
+    fi
+
+    mkdir -p "$PROJECT_DIR/staging"
+    for f in "$PROJECT_DIR"/target/digital-signature-*.jar; do
+        case "$f" in *-tests.jar) continue ;; esac
+        cp "$f" "$PROJECT_DIR/staging/"
+    done
+    resolve_jar
+    echo "==> Built: $JAR_PATH"
+}
 
 cmd_start() {
     echo "==> Starting Confluence ${CONFLUENCE_VERSION} test environment"
 
     # Clean up any previous run
-    podman pod rm -f "$POD_NAME" 2>/dev/null || true
-    podman volume rm "$POSTGRES_VOL" "$CONFLUENCE_VOL" 2>/dev/null || true
+    docker rm -f "$CONTAINER_CONFLUENCE" "$CONTAINER_POSTGRES" 2>/dev/null || true
+    docker network rm "$NETWORK_NAME" 2>/dev/null || true
+    docker volume rm "$POSTGRES_VOL" "$CONFLUENCE_VOL" 2>/dev/null || true
 
-    # Create volumes
-    podman volume create "$POSTGRES_VOL"
-    podman volume create "$CONFLUENCE_VOL"
-
-    # Create pod with port mappings
-    podman pod create --name "$POD_NAME" \
-        -p 8090:8090 \
-        -p 8091:8091 \
-        -p 5005:5005
+    # Create volumes and network
+    docker volume create "$POSTGRES_VOL"
+    docker volume create "$CONFLUENCE_VOL"
+    docker network create "$NETWORK_NAME"
 
     # Start PostgreSQL
-    podman run --name "$CONTAINER_POSTGRES" \
-        --pod "$POD_NAME" \
+    docker run --name "$CONTAINER_POSTGRES" \
+        --network "$NETWORK_NAME" \
         -v "${POSTGRES_VOL}:/var/lib/postgresql/data" \
         -e POSTGRES_PASSWORD=mysecretpassword \
-        -d postgres
+        -d postgres:17
 
     # Start Confluence
     local jvm_args="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
     jvm_args="$jvm_args -Datlassian.upm.signature.check.disabled=true"
     jvm_args="$jvm_args -Dupm.plugin.upload.enabled=true"
 
-    podman run --name "$CONTAINER_CONFLUENCE" \
-        --pod "$POD_NAME" \
+    docker run --name "$CONTAINER_CONFLUENCE" \
+        --network "$NETWORK_NAME" \
         -v "${CONFLUENCE_VOL}:/var/atlassian/application-data/confluence" \
+        -p "${HOST_PORT}:8090" \
+        -p "${SYNC_PORT}:8091" \
+        -p "${DEBUG_PORT}:5005" \
         -d \
         -e JVM_MINIMUM_MEMORY=1536m \
         -e JVM_MAXIMUM_MEMORY=1536m \
@@ -79,6 +140,7 @@ cmd_start() {
         "atlassian/confluence:${CONFLUENCE_VERSION}"
 
     echo "==> Waiting for Confluence to be ready..."
+    echo "    JDBC URL for setup: jdbc:postgresql://${CONTAINER_POSTGRES}:5432/postgres"
     local max_attempts=60
     local attempt=0
     while [ $attempt -lt $max_attempts ]; do
@@ -99,17 +161,18 @@ cmd_start() {
 }
 
 cmd_logs() {
-    podman logs -f "$CONTAINER_CONFLUENCE"
+    docker logs -f "$CONTAINER_CONFLUENCE"
 }
 
 cmd_upload() {
-    if [ ! -f "$JAR_PATH" ]; then
-        echo "==> Plugin JAR not found at $JAR_PATH"
-        echo "    Run: mvn package -DskipTests"
+    resolve_jar
+    if [ -z "$JAR_PATH" ] || [ ! -f "$JAR_PATH" ]; then
+        echo "==> Plugin JAR not found for Confluence ${CONFLUENCE_MAJOR}"
+        echo "    Run: $0 build ${CONFLUENCE_VERSION}"
         exit 1
     fi
 
-    echo "==> Uploading plugin to Confluence ${CONFLUENCE_VERSION}..."
+    echo "==> Uploading $JAR_PATH to Confluence ${CONFLUENCE_VERSION} at ${BASE_URL}..."
 
     # Get UPM token
     local upm_token
@@ -135,7 +198,7 @@ cmd_upload() {
 }
 
 cmd_verify() {
-    echo "==> Verifying plugin on Confluence ${CONFLUENCE_VERSION}..."
+    echo "==> Verifying plugin on Confluence ${CONFLUENCE_VERSION} at ${BASE_URL}..."
 
     local response
     response=$(curl -s --user "${ADMIN_USER}:${ADMIN_PASS}" \
@@ -157,12 +220,14 @@ cmd_verify() {
 
 cmd_teardown() {
     echo "==> Tearing down Confluence ${CONFLUENCE_VERSION} test environment..."
-    podman pod rm -f "$POD_NAME" 2>/dev/null || true
-    podman volume rm "$POSTGRES_VOL" "$CONFLUENCE_VOL" 2>/dev/null || true
+    docker rm -f "$CONTAINER_CONFLUENCE" "$CONTAINER_POSTGRES" 2>/dev/null || true
+    docker network rm "$NETWORK_NAME" 2>/dev/null || true
+    docker volume rm "$POSTGRES_VOL" "$CONFLUENCE_VOL" 2>/dev/null || true
     echo "==> Teardown complete."
 }
 
 case "$COMMAND" in
+    build)    cmd_build ;;
     start)    cmd_start ;;
     logs)     cmd_logs ;;
     upload)   cmd_upload ;;

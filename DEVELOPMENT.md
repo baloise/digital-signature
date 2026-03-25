@@ -277,40 +277,20 @@ In Velocity templates:
 $log.debug($debug)
 ```
 
-## Alternative: Docker/Podman
+## Alternative: Docker
 
-For production-like testing or when the SDK has compatibility issues, use Docker or Podman.
+For production-like testing or when the SDK has compatibility issues, use Docker.
 
-### Setup Guides
+See [docs/docker.md](docs/docker.md) for manual setup or use the automated test script:
 
-- **Docker:** See [docs/docker.md](docs/docker.md)
-- **Podman (macOS):** See [docs/podman-osx.md](docs/podman-osx.md)
-
-### Deploying Plugin to Container
-
-Build the plugin:
 ```bash
-mvn package -DskipTests
+scripts/test-plugin.sh build 9.5.4      # Build v9 plugin
+scripts/test-plugin.sh build 10.2.7     # Build v10 plugin
+scripts/test-plugin.sh start 9.5.4      # Start on port 9090
+scripts/test-plugin.sh start 10.2.7     # Start on port 10090
+scripts/test-plugin.sh upload 9.5.4     # Upload plugin via UPM
+scripts/test-plugin.sh upload 10.2.7
 ```
-
-**Option 1: Copy to container**
-```bash
-# Docker
-docker cp target/digital-signature-9.0.1.jar \
-  confluence:/var/atlassian/application-data/confluence/bundled-plugins/
-
-# Podman
-podman cp target/digital-signature-9.0.1.jar \
-  confluence:/var/atlassian/application-data/confluence/bundled-plugins/
-
-# Restart to load
-docker restart confluence  # or: podman restart confluence
-```
-
-**Option 2: Upload via UPM (no restart needed)**
-1. Open Confluence Admin > Manage apps
-2. Click "Upload app"
-3. Select `target/digital-signature-9.0.1.jar`
 
 ### When to Use Docker vs SDK
 
