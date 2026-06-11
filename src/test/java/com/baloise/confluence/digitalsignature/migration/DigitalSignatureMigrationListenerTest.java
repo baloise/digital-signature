@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.baloise.confluence.digitalsignature.Signature2;
@@ -30,12 +31,14 @@ import org.junit.jupiter.api.Test;
 class DigitalSignatureMigrationListenerTest {
 
     private BandanaManager bandanaManager;
+    private UserAccessor userAccessor;
     private DigitalSignatureMigrationListener listener;
 
     @BeforeEach
     void setUp() {
         bandanaManager = mock(BandanaManager.class);
-        listener = new DigitalSignatureMigrationListener(bandanaManager);
+        userAccessor = mock(UserAccessor.class);
+        listener = new DigitalSignatureMigrationListener(bandanaManager, userAccessor);
     }
 
     @Test
@@ -81,7 +84,7 @@ class DigitalSignatureMigrationListenerTest {
         sig.getMissingSignatures().add("bob");
         sig.getNotify().add("carol");
 
-        String line = DigitalSignatureMigrationListener.toJsonLine(sig);
+        String line = listener.toJsonLine(sig);
         JsonObject obj = new JsonParser().parse(line).getAsJsonObject();
 
         assertAll(

@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -13,14 +15,16 @@ import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.AccessScope;
+import com.atlassian.migration.app.ForgeEnvironmentName;
 import com.atlassian.migration.app.confluence.ConfluenceAppCloudMigrationListenerV1;
 import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.migration.app.listener.DiscoverableForgeListener;
-import com.atlassian.plugin.spring.scanner.annotation.component.ConfluenceComponent;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.baloise.confluence.digitalsignature.Signature2;
@@ -35,8 +39,8 @@ import com.google.gson.JsonObject;
  *
  * <p>Corresponds to backlog item i0051.
  */
-@ConfluenceComponent
 @ExportAsService({DiscoverableForgeListener.class, ConfluenceAppCloudMigrationListenerV1.class})
+@Component
 public class DigitalSignatureMigrationListener implements DiscoverableForgeListener, ConfluenceAppCloudMigrationListenerV1 {
 
     private static final Logger log = LoggerFactory.getLogger(DigitalSignatureMigrationListener.class);
@@ -48,9 +52,12 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
     static final String FORGE_MACRO_KEY = "digital-signature";
 
     private final BandanaManager bandanaManager;
+    private final UserAccessor userAccessor;
 
-    public DigitalSignatureMigrationListener(@ComponentImport BandanaManager bandanaManager) {
+    public DigitalSignatureMigrationListener(@ComponentImport BandanaManager bandanaManager,
+                                              @ComponentImport UserAccessor userAccessor) {
         this.bandanaManager = bandanaManager;
+        this.userAccessor = userAccessor;
     }
 
     @Override
@@ -60,7 +67,7 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
 
     @Override
     public String getForgeEnvironmentName() {
-        return "PRODUCTION";
+        return ForgeEnvironmentName.PRODUCTION;
     }
 
     @Override
@@ -137,16 +144,45 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
     /**
      * Serializes one {@link Signature2} into a single JSONL line (no trailing newline).
      *
+     * <p>The {@code signatures} map is re-keyed from usernames to Confluence userKeys
+     * (internal IDs like {@code 2c9680839d34a92c019d34add3010000}) because the CMA
+     * Mappings API on the Cloud side requires {@code confluence.userkey/<userKey>} format.
+     *
      * <p>Omits {@code missingSignatures} and {@code notify} — the Forge app
      * reconstructs required signers from the current macro config at render time.
      */
-    static String toJsonLine(Signature2 sig) {
+    String toJsonLine(Signature2 sig) {
         JsonObject obj = new JsonObject();
         obj.addProperty("hash", sig.getHash());
         obj.addProperty("pageId", sig.getPageId());
         obj.addProperty("title", sig.getTitle());
         obj.addProperty("body", sig.getBody());
-        obj.add("signatures", Signature2.GSON.toJsonTree(sig.getSignatures()));
+
+        // Re-key signatures: username → userKey, export dates as epoch millis (timezone-safe)
+        JsonObject sigs = new JsonObject();
+        for (Map.Entry<String, Date> entry : sig.getSignatures().entrySet()) {
+            String username = entry.getKey();
+            String userKey = resolveUserKey(username);
+            sigs.addProperty(userKey != null ? userKey : username, entry.getValue().getTime());
+        }
+        obj.add("signatures", sigs);
         return Signature2.GSON.toJson(obj);
+    }
+
+    private String resolveUserKey(String username) {
+        try {
+            var user = userAccessor.getUserByName(username);
+            if (user != null) {
+                String key = user.getKey() != null ? user.getKey().getStringValue() : null;
+                if (key != null) {
+                    log.debug("Resolved username '{}' → userKey '{}'", username, key);
+                    return key;
+                }
+            }
+            log.warn("Could not resolve userKey for username: {}", username);
+        } catch (Exception e) {
+            log.warn("Error resolving userKey for username '{}': {}", username, e.getMessage());
+        }
+        return null;
     }
 }
