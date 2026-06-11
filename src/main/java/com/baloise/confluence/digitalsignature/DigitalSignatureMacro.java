@@ -22,6 +22,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
+import com.atlassian.plugin.spring.scanner.annotation.component.ConfluenceComponent;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.core.ContentEntityObject;
@@ -60,13 +62,13 @@ public class DigitalSignatureMacro implements Macro {
   private final Set<String> all = new HashSet<>();
   private final ContextHelper contextHelper = new ContextHelper();
 
-  public DigitalSignatureMacro(BandanaManager bandanaManager,
-                               UserManager userManager,
-                               BootstrapManager bootstrapManager,
-                               PageManager pageManager,
-                               PermissionManager permissionManager,
-                               GroupManager groupManager,
-                               I18nResolver i18nResolver) {
+  public DigitalSignatureMacro(@ComponentImport BandanaManager bandanaManager,
+                               @ComponentImport UserManager userManager,
+                               @ComponentImport BootstrapManager bootstrapManager,
+                               @ComponentImport PageManager pageManager,
+                               @ComponentImport PermissionManager permissionManager,
+                               @ComponentImport GroupManager groupManager,
+                               @ComponentImport I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.userManager = userManager;
     this.bootstrapManager = bootstrapManager;

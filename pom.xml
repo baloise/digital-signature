@@ -12,7 +12,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.baloise.confluence</groupId>
 	<artifactId>digital-signature</artifactId>
-	<version>9.1.0</version>
+	<version>9.2.0</version>
 
 	<organization>
 		<name>Baloise</name>
@@ -78,7 +78,6 @@
 			<groupId>com.atlassian</groupId>
 			<artifactId>atlassian-app-cloud-migration-listener</artifactId>
 			<version>1.8.7</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -144,7 +143,6 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.2.2-atlassian-1</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -228,20 +226,17 @@
 							org.springframework.osgi.*;resolution:="optional",
 							org.eclipse.gemini.blueprint.*;resolution:="optional",
 							com.atlassian.mywork.*;resolution:="optional",
-							com.google.gson.*;resolution:="optional",
+							!com.google.gson.*,
 							org.jetbrains.annotations.*;resolution:="optional",
-							com.atlassian.migration.app.*;resolution:="optional",
-							com.sun.mail.imap,
-							com.sun.mail.smtp,
-							com.sun.mail.pop3,
+							!com.atlassian.migration.app.*,
+							!com.sun.mail.*,
 							*
 						</Import-Package>
 
-						<!-- Access Confluence-internal packages like Gson -->
-						<DynamicImport-Package>com.google.gson,com.google.gson.*</DynamicImport-Package>
+						<!-- Gson is bundled in the JAR -->
 
 						<!-- Ensure plugin is spring powered -->
-						<Spring-Context>*</Spring-Context>
+						<Spring-Context>*;timeout:=10</Spring-Context>
 					</instructions>
 				</configuration>
 				<!-- 
@@ -256,6 +251,21 @@
 </execution>
 </executions>
 -->
+			</plugin>
+
+			<!-- Build-time Spring Scanner: generates annotation index in META-INF/plugin-components/ -->
+			<plugin>
+				<groupId>com.atlassian.plugin</groupId>
+				<artifactId>atlassian-spring-scanner-maven-plugin</artifactId>
+				<version>2.0.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>atlassian-spring-scanner</goal>
+						</goals>
+						<phase>process-classes</phase>
+					</execution>
+				</executions>
 			</plugin>
 
 			<!-- Unpack flexmark compile-scope dependencies into target/classes

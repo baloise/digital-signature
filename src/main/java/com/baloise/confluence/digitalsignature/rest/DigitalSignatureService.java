@@ -1,5 +1,7 @@
 package com.baloise.confluence.digitalsignature.rest;
 
+import com.atlassian.plugin.spring.scanner.annotation.component.ConfluenceComponent;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.pages.Page;
 import com.atlassian.confluence.pages.PageManager;
@@ -58,12 +60,12 @@ public class DigitalSignatureService {
   private final ContextHelper contextHelper = new ContextHelper();
   private final transient Markdown markdown = new Markdown();
   
-  public DigitalSignatureService(BandanaManager bandanaManager,
-                                 SettingsManager settingsManager,
-                                 UserManager userManager,
-                                 MailServerManager mailServerManager,
-                                 PageManager pageManager,
-                                 I18nResolver i18nResolver) {
+  public DigitalSignatureService(@ComponentImport BandanaManager bandanaManager,
+                                 @ComponentImport SettingsManager settingsManager,
+                                 @ComponentImport UserManager userManager,
+                                 @ComponentImport MailServerManager mailServerManager,
+                                 @ComponentImport PageManager pageManager,
+                                 @ComponentImport I18nResolver i18nResolver) {
     this.bandanaManager = bandanaManager;
     this.settingsManager = settingsManager;
     this.userManager = userManager;
