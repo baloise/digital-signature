@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,9 +20,12 @@ import com.baloise.confluence.digitalsignature.sal.DummyProfile;
 
 public class ContextHelper {
   public Object getOrderedSignatures(Signature2 signature) {
+    // Copy to a plain LinkedHashMap first to avoid Gson internal StringMap$LinkedEntry
+    // which is blocked by the Confluence Velocity allowlist
+    Map<String, Date> plain = new LinkedHashMap<>(signature.getSignatures());
     SortedSet<Entry<String, Date>> ret = new TreeSet<>(Comparator.comparing((Function<Entry<String, Date>, Date>) Entry::getValue)
                                                                  .thenComparing(Entry::getKey));
-    ret.addAll(signature.getSignatures().entrySet());
+    ret.addAll(plain.entrySet());
     return ret;
   }
 
