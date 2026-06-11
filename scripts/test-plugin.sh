@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLUGIN_KEY="com.baloise.confluence.digital-signature"
+LICENSE_DIR="$PROJECT_DIR/licenses"
 ADMIN_USER="admin"
 ADMIN_PASS="admin"
 
@@ -102,6 +103,49 @@ cmd_build() {
     echo "==> Built: $JAR_PATH"
 }
 
+resolve_license() {
+    # Pick the newest license file from licenses/ dir
+    # File name convention: SERVERID_YYYY_MM_DD.txt
+    LICENSE_FILE=""
+    LICENSE_SERVER_ID=""
+    local newest="" newest_ts=0
+    for f in "$LICENSE_DIR"/*_*.txt; do
+        [ -f "$f" ] || continue
+        local ts
+        ts=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null || echo 0)
+        if [ "$ts" -gt "$newest_ts" ]; then
+            newest_ts="$ts"
+            newest="$f"
+        fi
+    done
+    if [ -n "$newest" ]; then
+        LICENSE_FILE="$newest"
+        # Extract Server ID from filename: SERVERID_YYYY_MM_DD.txt
+        local basename
+        basename=$(basename "$newest" .txt)
+        LICENSE_SERVER_ID="${basename%%_[0-9]*}"
+        echo "  License: $(basename "$newest")"
+        echo "  Server ID: ${LICENSE_SERVER_ID}"
+    fi
+}
+
+inject_server_id() {
+    local container="$1" server_id="$2"
+    local cfg="/var/atlassian/application-data/confluence/confluence.cfg.xml"
+    # Wait for Confluence to create the initial config file
+    local attempts=0
+    while [ $attempts -lt 30 ]; do
+        if docker exec "$container" test -f "$cfg" 2>/dev/null; then
+            break
+        fi
+        attempts=$((attempts + 1))
+        sleep 2
+    done
+    docker exec "$container" sed -i "s|<property name=\"confluence.setup.server.id\">[^<]*</property>|<property name=\"confluence.setup.server.id\">${server_id}</property>|" "$cfg"
+    docker restart "$container" > /dev/null
+    echo "  Injected Server ID ${server_id} and restarted"
+}
+
 cmd_start() {
     echo "==> Starting Confluence ${CONFLUENCE_VERSION} test environment"
 
@@ -126,6 +170,7 @@ cmd_start() {
     local jvm_args="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
     jvm_args="$jvm_args -Datlassian.upm.signature.check.disabled=true"
     jvm_args="$jvm_args -Dupm.plugin.upload.enabled=true"
+    jvm_args="$jvm_args -Datlassian.rest.basic.auth.enabled=true"
 
     docker run --name "$CONTAINER_CONFLUENCE" \
         --network "$NETWORK_NAME" \
@@ -138,6 +183,13 @@ cmd_start() {
         -e JVM_MAXIMUM_MEMORY=1536m \
         -e JVM_SUPPORT_RECOMMENDED_ARGS="$jvm_args" \
         "atlassian/confluence:${CONFLUENCE_VERSION}"
+
+    # Inject matching Server ID for the license
+    resolve_license
+    if [ -n "$LICENSE_SERVER_ID" ]; then
+        echo "==> Injecting Server ID to match license..."
+        inject_server_id "$CONTAINER_CONFLUENCE" "$LICENSE_SERVER_ID"
+    fi
 
     echo "==> Waiting for Confluence to be ready..."
     echo "    JDBC URL for setup: jdbc:postgresql://${CONTAINER_POSTGRES}:5432/postgres"
