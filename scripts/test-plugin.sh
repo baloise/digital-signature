@@ -171,6 +171,10 @@ cmd_start() {
     jvm_args="$jvm_args -Datlassian.upm.signature.check.disabled=true"
     jvm_args="$jvm_args -Dupm.plugin.upload.enabled=true"
     jvm_args="$jvm_args -Datlassian.rest.basic.auth.enabled=true"
+    # Forge environment the CMA migration listener routes signature data to.
+    # Defaults to production (shipping behaviour); the e2e migration test sets
+    # DS_FORGE_MIGRATION_ENV=development to target a dev installation.
+    jvm_args="$jvm_args -Dds.forge.migration.environment=${DS_FORGE_MIGRATION_ENV:-production}"
 
     docker run --name "$CONTAINER_CONFLUENCE" \
         --network "$NETWORK_NAME" \

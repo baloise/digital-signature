@@ -4,14 +4,16 @@ set -euo pipefail
 # Creates comprehensive test fixtures for CMA end-to-end testing.
 # Targets a local Confluence 10 Server instance with the digital-signature plugin installed.
 #
-# Usage: ./create-cma-test-fixtures.sh [base-url]
-#   base-url defaults to http://localhost:10090
+# Usage: ./create-cma-test-fixtures.sh [base-url] [space-key]
+#   base-url  defaults to http://localhost:10090
+#   space-key defaults to CMA. Pass a fresh key per run (e.g. CMA<runid>) so the
+#             repeatable e2e migration test lands each run in its own Cloud space.
 
 BASE_URL="${1:-http://localhost:10090}"
+SPACE_KEY="${2:-CMA}"
 ADMIN_USER="admin"
 ADMIN_PASS="admin"
 AUTH="${ADMIN_USER}:${ADMIN_PASS}"
-SPACE_KEY="CMA"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
