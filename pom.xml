@@ -12,7 +12,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.baloise.confluence</groupId>
 	<artifactId>digital-signature</artifactId>
-	<version>9.0.1</version>
+	<version>9.4.0</version>
+
 
 	<organization>
 		<name>Baloise</name>
@@ -53,12 +54,31 @@
 			<artifactId>confluence</artifactId>
 			<version>9.5.4</version>
 			<scope>provided</scope>
+			<exclusions>
+				<!-- JTA 1.0.1B is not in any public Maven repo; use javax.transaction-api instead -->
+				<exclusion>
+					<groupId>javax.transaction</groupId>
+					<artifactId>jta</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- Replacement for unavailable javax.transaction:jta:1.0.1B -->
+		<dependency>
+			<groupId>javax.transaction</groupId>
+			<artifactId>javax.transaction-api</artifactId>
+			<version>1.3</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.plugin</groupId>
 			<artifactId>atlassian-spring-scanner-annotation</artifactId>
-			<version>6.0.0</version>
+			<version>5.1.0</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.atlassian</groupId>
+			<artifactId>atlassian-app-cloud-migration-listener</artifactId>
+			<version>1.8.7</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -76,12 +96,6 @@
 			<artifactId>sal-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.atlassian.plugins</groupId>
-			<artifactId>atlassian-plugins-osgi-javaconfig</artifactId>
-			<version>${osgi.javaconfig.version}</version>
-		</dependency>
-		<!-- OSGi Java Config dependencies -->
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
@@ -111,7 +125,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-pool2</artifactId>
-			<version>2.12.0</version>
+			<version>2.13.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -135,7 +149,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.8.2</version>
+			<version>5.13.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -163,15 +177,42 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<repositories>
+		<repository>
+			<id>atlassian-public</id>
+			<url>https://packages.atlassian.com/maven-public/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>atlassian-public</id>
+			<url>https://packages.atlassian.com/maven-public/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>com.atlassian.maven.plugins</groupId>
-				<artifactId>refapp-maven-plugin</artifactId>
+				<artifactId>confluence-maven-plugin</artifactId>
 				<version>${amps.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<productVersion>${refapp.version}</productVersion>
+					<productVersion>${confluence.version}</productVersion>
 					<enableQuickReload>true</enableQuickReload>
 
 					<!-- See here for an explanation of default instructions: -->
@@ -180,23 +221,24 @@
 					<instructions>
 						<Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
 
-						<!-- Add package to export here -->
-						<Export-Package>
-							com.baloise.confluence.digitalsignature.api,
-						</Export-Package>
+						<!-- No packages exported - this is a UI plugin only -->
 
 						<!-- Add package import here -->
 						<Import-Package>
 							org.springframework.osgi.*;resolution:="optional",
 							org.eclipse.gemini.blueprint.*;resolution:="optional",
-							com.sun.mail.imap,
-							com.sun.mail.smtp,
-							com.sun.mail.pop3,
+							com.atlassian.mywork.*;resolution:="optional",
+							!com.google.gson.*,
+							org.jetbrains.annotations.*;resolution:="optional",
+							!com.atlassian.migration.app.*,
+							!com.sun.mail.*,
 							*
 						</Import-Package>
 
+						<!-- Gson is bundled in the JAR -->
+
 						<!-- Ensure plugin is spring powered -->
-						<Spring-Context>*</Spring-Context>
+						<Spring-Context>*;timeout:=10</Spring-Context>
 					</instructions>
 				</configuration>
 				<!-- 
@@ -213,12 +255,49 @@
 -->
 			</plugin>
 
+			<!-- Build-time Spring Scanner: generates annotation index in META-INF/plugin-components/ -->
+			<plugin>
+				<groupId>com.atlassian.plugin</groupId>
+				<artifactId>atlassian-spring-scanner-maven-plugin</artifactId>
+				<version>2.0.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>atlassian-spring-scanner</goal>
+						</goals>
+						<phase>process-classes</phase>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Unpack flexmark compile-scope dependencies into target/classes
+			     so they get bundled into the OSGi plugin JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.6.1</version>
+				<executions>
+					<execution>
+						<id>unpack-flexmark</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeGroupIds>com.vladsch.flexmark</includeGroupIds>
+							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+							<excludes>META-INF/**</excludes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- Maven Surefire Plugin for running tests with module access
 			fixes -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M7</version>
+				<version>3.5.4</version>
 				<configuration>
 					<argLine>
 						--add-opens java.base/java.lang=ALL-UNNAMED
@@ -237,7 +316,6 @@
 						--add-opens java.base/sun.net.util=ALL-UNNAMED
 						--add-exports java.base/sun.nio.ch=ALL-UNNAMED
 						--add-exports java.base/sun.security.util=ALL-UNNAMED
-						--illegal-access=permit
 					</argLine>
 				</configuration>
 			</plugin>
@@ -246,18 +324,53 @@
 
 	<properties>
 		<platform.version>6.1.14</platform.version>
-		<refapp.version>9.2.5</refapp.version>
+		<confluence.version>9.5.4</confluence.version>
 		<amps.version>9.5.4</amps.version>
 		<plugin.testrunner.version>2.0.2</plugin.testrunner.version>
-		<osgi.javaconfig.version>0.2.0</osgi.javaconfig.version>
-		<spring.version>4.2.5.RELEASE</spring.version>
+		<spring.version>6.1.21</spring.version>
 
 		<!-- This property ensures consistency between the key in
 		atlassian-plugin.xml and the OSGi bundle's key. -->
 		<atlassian.plugin.key>${project.groupId}.${project.artifactId}</atlassian.plugin.key>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>confluence10</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.transformer</groupId>
+						<artifactId>transformer-maven-plugin</artifactId>
+						<version>0.5.0</version>
+						<configuration>
+							<rules>
+								<renames>${project.basedir}/etc/jakarta-renames.properties</renames>
+							</rules>
+							<packagingTypes>
+								<packagingType>atlassian-plugin</packagingType>
+							</packagingTypes>
+							<overwrite>true</overwrite>
+						</configuration>
+						<executions>
+							<execution>
+								<id>transform-jakarta</id>
+								<phase>process-classes</phase>
+								<goals>
+									<goal>transform</goal>
+								</goals>
+								<configuration>
+									<transformDirectory>${project.build.outputDirectory}</transformDirectory>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

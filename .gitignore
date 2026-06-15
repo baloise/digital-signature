@@ -7,3 +7,8 @@
 
 .idea
 *.iml
+.DS_Store
+/.playwright-mcp/
+/licenses
+/staging
+/logs

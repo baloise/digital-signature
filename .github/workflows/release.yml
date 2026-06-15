@@ -10,45 +10,83 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source 🛎️
-      uses: actions/checkout@v2
+    - name: Checkout Source
+      uses: actions/checkout@v4
 
     - name: Set up Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
-        'distribution': adopt
-        java-version: '11'
+        distribution: temurin
+        java-version: '17'
 
-    - name: Build with Maven 🔧
-      run: mvn -B package --file pom.xml
+    - name: Get versions
+      id: version
+      run: |
+        C9=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout --file pom.xml)
+        echo "C9_VERSION=${C9}" >> $GITHUB_OUTPUT
+        echo "C10_VERSION=10.${C9#*.}" >> $GITHUB_OUTPUT
 
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Artifacts
-        path: |
-          ./target/*.jar
-          ./target/*.obr
+    - name: Build for Confluence 9
+      run: mvn -B clean package --file pom.xml
+
+    - name: Save Confluence 9 artifacts
+      run: |
+        mkdir -p staging
+        cp target/digital-signature-${{ steps.version.outputs.C9_VERSION }}.jar staging/
+        cp target/digital-signature-${{ steps.version.outputs.C9_VERSION }}.obr staging/
+
+    - name: Set version for Confluence 10
+      run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.C10_VERSION }} -DgenerateBackupPoms=false
+
+    - name: Build for Confluence 10
+      run: mvn -B clean package -Pconfluence10 --file pom.xml
+
+    - name: Save Confluence 10 artifacts
+      run: |
+        cp target/digital-signature-${{ steps.version.outputs.C10_VERSION }}.jar staging/
+        cp target/digital-signature-${{ steps.version.outputs.C10_VERSION }}.obr staging/
 
     - name: Release using Github CLI
-      run: gh release create ${GITHUB_REF##*/} ./target/*.jar ./target/*.obr -t "Release ${GITHUB_REF##*/}"
+      run: |
+        C9=${{ steps.version.outputs.C9_VERSION }}
+        C10=${{ steps.version.outputs.C10_VERSION }}
+        gh release create ${GITHUB_REF##*/} \
+          ./staging/digital-signature-${C9}.jar \
+          ./staging/digital-signature-${C9}.obr \
+          ./staging/digital-signature-${C10}.jar \
+          ./staging/digital-signature-${C10}.obr \
+          -t "Release ${GITHUB_REF##*/} (Confluence 9: ${C9}, Confluence 10: ${C10})"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Copy artifacts
+    - name: Prepare Confluence 9 gh-pages folder
       run: |
-        mkdir artifacts
-        cp target/*.jar artifacts/
-        cp target/*.obr artifacts/
-        rm artifacts/*-tests.jar
-        ls artifacts
+        mkdir c9-deploy
+        cp staging/digital-signature-${{ steps.version.outputs.C9_VERSION }}.jar c9-deploy/
+        cp staging/digital-signature-${{ steps.version.outputs.C9_VERSION }}.obr c9-deploy/
 
-    - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@3.7.1
+    - name: Deploy Confluence 9 to gh-pages
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: artifacts
-        CLEAN: false
-        TARGET_FOLDER: ${GITHUB_REF##*/}
-        COMMIT_MESSAGE: Releasing tag/branch ${GITHUB_REF##*/}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: c9-deploy
+        clean: true
+        target-folder: ${{ steps.version.outputs.C9_VERSION }}
+        commit-message: Release ${{ steps.version.outputs.C9_VERSION }}
+
+    - name: Prepare Confluence 10 gh-pages folder
+      run: |
+        mkdir c10-deploy
+        cp staging/digital-signature-${{ steps.version.outputs.C10_VERSION }}.jar c10-deploy/
+        cp staging/digital-signature-${{ steps.version.outputs.C10_VERSION }}.obr c10-deploy/
+
+    - name: Deploy Confluence 10 to gh-pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: c10-deploy
+        clean: true
+        target-folder: ${{ steps.version.outputs.C10_VERSION }}
+        commit-message: Release ${{ steps.version.outputs.C10_VERSION }}
