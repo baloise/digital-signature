@@ -65,9 +65,17 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
         return UUID.fromString(FORGE_APP_ID);
     }
 
+    /**
+     * Forge environment the migration data is routed to.
+     *
+     * <p>Defaults to {@code production} (the shipping behaviour). Overridable via the
+     * {@code ds.forge.migration.environment} JVM system property (e.g. {@code development})
+     * so the end-to-end migration test can target a development installation without
+     * touching production data. See {@code docs/cma-migration-e2e.md} in the Cloud app repo.
+     */
     @Override
     public String getForgeEnvironmentName() {
-        return ForgeEnvironmentName.PRODUCTION;
+        return System.getProperty("ds.forge.migration.environment", ForgeEnvironmentName.PRODUCTION);
     }
 
     @Override
