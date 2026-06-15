@@ -12,7 +12,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.baloise.confluence</groupId>
 	<artifactId>digital-signature</artifactId>
-	<version>9.4.0</version>
+	<version>9.4.1</version>
 
 
 	<organization>
@@ -228,14 +228,11 @@
 							org.springframework.osgi.*;resolution:="optional",
 							org.eclipse.gemini.blueprint.*;resolution:="optional",
 							com.atlassian.mywork.*;resolution:="optional",
-							!com.google.gson.*,
 							org.jetbrains.annotations.*;resolution:="optional",
 							!com.atlassian.migration.app.*,
 							!com.sun.mail.*,
 							*
 						</Import-Package>
-
-						<!-- Gson is bundled in the JAR -->
 
 						<!-- Ensure plugin is spring powered -->
 						<Spring-Context>*;timeout:=10</Spring-Context>
