@@ -46,6 +46,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 
+@ConfluenceComponent
 @Path("/")
 @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -147,7 +148,7 @@ public class DigitalSignatureService {
                 .setMimeType("text/html")
         );
       }
-    } catch (IllegalArgumentException | MailException e) {
+    } catch (Throwable e) {
       log.error("Could not send notification to " + notifiedUser, e);
     }
   }
