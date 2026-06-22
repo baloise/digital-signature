@@ -18,7 +18,13 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.confluence.pages.Page;
+import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.user.UserAccessor;
+import com.atlassian.migration.app.ConfluenceSpaceContainerV1;
+import com.atlassian.migration.app.ContainerType;
+import com.atlassian.migration.app.ContainerV1;
+import com.atlassian.migration.app.PaginatedContainers;
 import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.baloise.confluence.digitalsignature.Signature2;
@@ -32,13 +38,15 @@ class DigitalSignatureMigrationListenerTest {
 
     private BandanaManager bandanaManager;
     private UserAccessor userAccessor;
+    private PageManager pageManager;
     private DigitalSignatureMigrationListener listener;
 
     @BeforeEach
     void setUp() {
         bandanaManager = mock(BandanaManager.class);
         userAccessor = mock(UserAccessor.class);
-        listener = new DigitalSignatureMigrationListener(bandanaManager, userAccessor);
+        pageManager = mock(PageManager.class);
+        listener = new DigitalSignatureMigrationListener(bandanaManager, userAccessor, pageManager);
     }
 
     @Test
@@ -57,7 +65,7 @@ class DigitalSignatureMigrationListenerTest {
                 listener.getForgeAppId().toString()
             ),
             () -> assertEquals(
-                "digital-signature",
+                "signature",
                 DigitalSignatureMigrationListener.SERVER_MACRO_KEY
             ),
             () -> assertEquals(
@@ -68,12 +76,14 @@ class DigitalSignatureMigrationListenerTest {
     }
 
     @Test
-    void macroMapping_returnsIdentityMappingForCanonicalMacroKey() {
+    void macroMapping_mapsServerMacroNameToForgeKey() {
+        // CMA keys the mapping by the SOURCE macro name ("signature", per
+        // <xhtml-macro name="signature">), mapping it to the Forge macro key.
         Map<String, String> mapping = listener.getServerToForgeMacroMapping();
         assertEquals(1, mapping.size());
         assertEquals(
             "digital-signature",
-            mapping.get("digital-signature")
+            mapping.get("signature")
         );
     }
 
@@ -159,6 +169,47 @@ class DigitalSignatureMigrationListenerTest {
 
         List<String> lines = gunzipLines(buffer.toByteArray());
         assertEquals(0, lines.size());
+    }
+
+    @Test
+    void onStartAppMigration_scopesToMigratedSpaces() throws Exception {
+        Signature2 inScope = new Signature2(10L, "body1", "title1");
+        inScope.getSignatures().put("user1", new Date(1000));
+        Signature2 outOfScope = new Signature2(20L, "body2", "title2");
+        outOfScope.getSignatures().put("user2", new Date(2000));
+
+        when(bandanaManager.getKeys(GLOBAL_CONTEXT)).thenReturn(List.of(inScope.getKey(), outOfScope.getKey()));
+        when(bandanaManager.getValue(eq(GLOBAL_CONTEXT), eq(inScope.getKey()))).thenReturn(Signature2.GSON.toJson(inScope, Signature2.class));
+        when(bandanaManager.getValue(eq(GLOBAL_CONTEXT), eq(outOfScope.getKey()))).thenReturn(Signature2.GSON.toJson(outOfScope, Signature2.class));
+
+        // pageId 10 lives in the migrated space "INSCOPE"; pageId 20 lives elsewhere.
+        Page inScopePage = mock(Page.class);
+        when(inScopePage.getSpaceKey()).thenReturn("INSCOPE");
+        Page otherPage = mock(Page.class);
+        when(otherPage.getSpaceKey()).thenReturn("OTHER");
+        when(pageManager.getPage(10L)).thenReturn(inScopePage);
+        when(pageManager.getPage(20L)).thenReturn(otherPage);
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        AppCloudForgeMigrationGateway gateway = mock(AppCloudForgeMigrationGateway.class);
+        when(gateway.createAppData("signatures")).thenReturn(buffer);
+
+        // No full-site container; one ConfluenceSpace container for "INSCOPE".
+        PaginatedContainers noSite = mock(PaginatedContainers.class);
+        when(noSite.next()).thenReturn(false);
+        when(gateway.getPaginatedContainers(ContainerType.Site, 50)).thenReturn(noSite);
+        PaginatedContainers spaces = mock(PaginatedContainers.class);
+        when(spaces.next()).thenReturn(true, false);
+        when(spaces.getContainers()).thenReturn(List.<ContainerV1>of(new ConfluenceSpaceContainerV1("100", "INSCOPE")));
+        when(gateway.getPaginatedContainers(ContainerType.ConfluenceSpace, 100)).thenReturn(spaces);
+
+        listener.onStartAppMigration(gateway, new MigrationDetailsV1());
+        verify(gateway).completeExport();
+
+        List<String> lines = gunzipLines(buffer.toByteArray());
+        assertEquals(1, lines.size(), "Only the in-scope space's contract should be exported");
+        JsonObject only = new JsonParser().parse(lines.get(0)).getAsJsonObject();
+        assertEquals(inScope.getHash(), only.get("hash").getAsString());
     }
 
     // ---- helpers ----
