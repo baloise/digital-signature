@@ -104,14 +104,21 @@ cmd_upload() {
   [ -n "$JAR_PATH" ] && [ -f "$JAR_PATH" ] || die "no staged JAR — run: $0 build"
   log "Uploading $(basename "$JAR_PATH") -> ${HOST}"
 
+  # Share a session cookie across the token fetch and the upload. On a clustered
+  # instance (e.g. prod) the two basic-auth requests otherwise hit different nodes
+  # and the upm-token is rejected with "upm.error.invalid.token" — sticky sessions
+  # keyed by JSESSIONID keep both on the same node.
+  local cookies; cookies=$(mktemp)
   local token
-  token=$(curl -s -I --user "${USER_}:${PASS_}" -H 'Accept: application/vnd.atl.plugins.installed+json' \
+  token=$(curl -s -I -c "$cookies" -b "$cookies" --user "${USER_}:${PASS_}" \
+          -H 'Accept: application/vnd.atl.plugins.installed+json' \
           "${HOST}/rest/plugins/1.0/?os_authType=basic" | grep -i '^upm-token:' | awk '{print $2}' | tr -d '\r\n')
-  [ -n "$token" ] || die "could not obtain UPM token from ${HOST} (sysadmin rights / basic auth required)"
+  [ -n "$token" ] || { rm -f "$cookies"; die "could not obtain UPM token from ${HOST} (sysadmin rights / basic auth required)"; }
 
   local resp
-  resp=$(curl -s --user "${USER_}:${PASS_}" -H 'Accept: application/json' \
+  resp=$(curl -s -c "$cookies" -b "$cookies" --user "${USER_}:${PASS_}" -H 'Accept: application/json' \
          "${HOST}/rest/plugins/1.0/?token=${token}" -F "plugin=@${JAR_PATH}")
+  rm -f "$cookies"
   echo "$resp" | python3 -m json.tool 2>/dev/null || echo "$resp"
 
   # UPM installs asynchronously and the enabled flag can briefly flap while

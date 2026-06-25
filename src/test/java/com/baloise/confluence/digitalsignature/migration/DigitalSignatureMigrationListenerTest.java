@@ -194,10 +194,12 @@ class DigitalSignatureMigrationListenerTest {
         AppCloudForgeMigrationGateway gateway = mock(AppCloudForgeMigrationGateway.class);
         when(gateway.createAppData("signatures")).thenReturn(buffer);
 
-        // No full-site container; one ConfluenceSpace container for "INSCOPE".
-        PaginatedContainers noSite = mock(PaginatedContainers.class);
-        when(noSite.next()).thenReturn(false);
-        when(gateway.getPaginatedContainers(ContainerType.Site, 50)).thenReturn(noSite);
+        // Regression: CMA returns a Site container even for a single-space migration. The export
+        // must NOT treat that as full-site — it must scope to the ConfluenceSpace container.
+        PaginatedContainers site = mock(PaginatedContainers.class);
+        when(site.next()).thenReturn(true, false);
+        when(site.getContainers()).thenReturn(List.of(mock(ContainerV1.class)));
+        when(gateway.getPaginatedContainers(ContainerType.Site, 50)).thenReturn(site);
         PaginatedContainers spaces = mock(PaginatedContainers.class);
         when(spaces.next()).thenReturn(true, false);
         when(spaces.getContainers()).thenReturn(List.<ContainerV1>of(new ConfluenceSpaceContainerV1("100", "INSCOPE")));

@@ -251,15 +251,15 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
             }
             log.info("Migration scope probe: siteContainers={} confluenceSpaceContainers={} spaceKeys={}",
                     siteContainers, spaceContainers, inScopeSpaceKeys);
-            if (siteContainers > 0) {
-                return true; // full-site migration → export all
-            }
         } catch (Exception e) {
             log.warn("Could not determine migration scope; exporting all signatures. {}", e.getMessage());
             return true;
         }
+        // Scope by the ConfluenceSpace containers. CMA returns a Site container even for a
+        // single-space migration, so a present Site container does NOT imply full-site — only the
+        // ABSENCE of space containers does (genuine full-site / undetermined → safe fallback).
         if (inScopeSpaceKeys.isEmpty()) {
-            log.warn("Migration scope resolved to zero spaces; exporting all signatures as a safe fallback.");
+            log.warn("No ConfluenceSpace containers in scope; exporting all signatures (full-site or undetermined).");
             return true;
         }
         return false;
