@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -212,6 +213,49 @@ class DigitalSignatureMigrationListenerTest {
         assertEquals(1, lines.size(), "Only the in-scope space's contract should be exported");
         JsonObject only = new JsonParser().parse(lines.get(0)).getAsJsonObject();
         assertEquals(inScope.getHash(), only.get("hash").getAsString());
+    }
+
+    @Test
+    void onStartAppMigration_chunksAppDataBySize() throws Exception {
+        // Scalability: the exporter writes one createAppData("signatures") entry per CHUNK_SIZE
+        // contracts, so CMA delivers one uploaded:app_data message per chunk and the Forge
+        // importer processes each in its own bounded, sub-25s invocation.
+        int original = DigitalSignatureMigrationListener.CHUNK_SIZE;
+        DigitalSignatureMigrationListener.CHUNK_SIZE = 2;
+        try {
+            Signature2 s1 = new Signature2(10L, "b1", "t1"); s1.getSignatures().put("u1", new Date(1000));
+            Signature2 s2 = new Signature2(20L, "b2", "t2"); s2.getSignatures().put("u2", new Date(2000));
+            Signature2 s3 = new Signature2(30L, "b3", "t3"); s3.getSignatures().put("u3", new Date(3000));
+
+            when(bandanaManager.getKeys(GLOBAL_CONTEXT)).thenReturn(List.of(s1.getKey(), s2.getKey(), s3.getKey()));
+            when(bandanaManager.getValue(eq(GLOBAL_CONTEXT), eq(s1.getKey()))).thenReturn(Signature2.GSON.toJson(s1, Signature2.class));
+            when(bandanaManager.getValue(eq(GLOBAL_CONTEXT), eq(s2.getKey()))).thenReturn(Signature2.GSON.toJson(s2, Signature2.class));
+            when(bandanaManager.getValue(eq(GLOBAL_CONTEXT), eq(s3.getKey()))).thenReturn(Signature2.GSON.toJson(s3, Signature2.class));
+
+            // No space containers stubbed → resolveInScopeSpaceKeys falls back to exportAll=true.
+            List<ByteArrayOutputStream> buffers = new ArrayList<>();
+            AppCloudForgeMigrationGateway gateway = mock(AppCloudForgeMigrationGateway.class);
+            when(gateway.createAppData("signatures")).thenAnswer(inv -> {
+                ByteArrayOutputStream b = new ByteArrayOutputStream();
+                buffers.add(b);
+                return b;
+            });
+
+            listener.onStartAppMigration(gateway, new MigrationDetailsV1());
+
+            // 3 contracts / CHUNK_SIZE 2 → 2 independent app-data entries (2 + 1); completeExport once.
+            verify(gateway, times(2)).createAppData("signatures");
+            verify(gateway).completeExport();
+            assertEquals(2, buffers.size());
+
+            int total = 0;
+            for (ByteArrayOutputStream b : buffers) total += gunzipLines(b.toByteArray()).size();
+            assertEquals(3, total, "all contracts exported across chunks");
+            assertEquals(2, gunzipLines(buffers.get(0).toByteArray()).size(), "first chunk full");
+            assertEquals(1, gunzipLines(buffers.get(1).toByteArray()).size(), "final chunk partial");
+        } finally {
+            DigitalSignatureMigrationListener.CHUNK_SIZE = original;
+        }
     }
 
     // ---- helpers ----

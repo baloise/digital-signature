@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -61,6 +63,13 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
     static final String SERVER_MACRO_KEY = "signature";
     // Forge macro key — the macro module key in the Cloud app's manifest.yml.
     static final String FORGE_MACRO_KEY = "digital-signature";
+
+    // Contracts per app-data chunk. The exporter writes one createAppData("signatures")
+    // entry per CHUNK_SIZE contracts, so CMA delivers one uploaded:app_data message per
+    // chunk and the Forge importer processes each in its own bounded, sub-25s invocation —
+    // independent of total space size (the fix for large-space migration timeouts).
+    // Non-final so tests can shrink it.
+    static int CHUNK_SIZE = 100;
 
     private final BandanaManager bandanaManager;
     private final UserAccessor userAccessor;
@@ -144,10 +153,11 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
         boolean exportAll = resolveInScopeSpaceKeys(gateway, inScopeSpaceKeys);
         log.info("Migration export scope: {}", exportAll ? "ALL spaces (full-site / undetermined)" : inScopeSpaceKeys);
 
-        try (OutputStream raw = gateway.createAppData("signatures");
-             GZIPOutputStream gzip = new GZIPOutputStream(raw);
-             OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8)) {
-
+        int chunks = 0;
+        try {
+            // Buffer in-scope contracts and flush every CHUNK_SIZE as an independent
+            // app-data entry. Holds at most CHUNK_SIZE JSONL lines in memory at once.
+            List<String> batch = new ArrayList<>(CHUNK_SIZE);
             Iterable<String> keys = bandanaManager.getKeys(GLOBAL_CONTEXT);
             if (keys != null) {
                 for (String key : keys) {
@@ -166,25 +176,64 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
                         skippedOutOfScope++;
                         continue;
                     }
-                    writer.write(toJsonLine(sig));
-                    writer.write('\n');
+                    batch.add(toJsonLine(sig));
                     exported++;
                     totalSignatures += sig.getSignatures().size();
+
+                    if (batch.size() >= CHUNK_SIZE) {
+                        writeChunk(gateway, batch);
+                        chunks++;
+                        log.info("Migration export: wrote chunk #{} ({} contracts; {} exported so far)",
+                                chunks, batch.size(), exported);
+                        batch.clear();
+                    }
                 }
+            }
+            // Flush the final partial chunk.
+            if (!batch.isEmpty()) {
+                writeChunk(gateway, batch);
+                chunks++;
+                log.info("Migration export: wrote final chunk #{} ({} contracts)", chunks, batch.size());
+                batch.clear();
+            }
+            // Always emit at least one entry (matches prior behavior) so the Forge listener
+            // runs once even when nothing was in scope.
+            if (chunks == 0) {
+                writeChunk(gateway, batch); // batch is empty → an empty JSONL.gz entry
+                chunks++;
+                log.info("Migration export: no in-scope contracts; wrote one empty chunk");
             }
         } catch (IOException e) {
             log.error("Failed to export signature data for migration", e);
             writeMigrationDebug(gateway, startedAt, exportAll, inScopeSpaceKeys, scanned, exported,
-                    totalSignatures, skippedOutOfScope, corrupt, "FAILED: " + e.getMessage());
+                    totalSignatures, skippedOutOfScope, corrupt, chunks, "FAILED: " + e.getMessage());
             throw new RuntimeException("Migration export failed", e);
         }
 
         long elapsedMs = System.currentTimeMillis() - startedAt;
-        log.info("Migration export complete: scanned={} exported={} signatures={} skippedOutOfScope={} corrupt={} elapsedMs={}",
-                scanned, exported, totalSignatures, skippedOutOfScope, corrupt, elapsedMs);
+        log.info("Migration export complete: scanned={} exported={} chunks={} chunkSize={} signatures={} skippedOutOfScope={} corrupt={} elapsedMs={}",
+                scanned, exported, chunks, CHUNK_SIZE, totalSignatures, skippedOutOfScope, corrupt, elapsedMs);
         writeMigrationDebug(gateway, startedAt, exportAll, inScopeSpaceKeys, scanned, exported,
-                totalSignatures, skippedOutOfScope, corrupt, "OK");
+                totalSignatures, skippedOutOfScope, corrupt, chunks, "OK");
         gateway.completeExport();
+    }
+
+    /**
+     * Writes one batch of contracts as a single app-data entry: a fresh
+     * {@code createAppData("signatures")} stream of gzipped JSONL, closed to finalise the
+     * upload. Each entry becomes an independent {@code uploaded:app_data} message on the
+     * Forge side. The label is intentionally identical for every chunk — the Forge handler
+     * filters on it and processes each message by its unique key.
+     */
+    private void writeChunk(AppCloudForgeMigrationGateway gateway, List<String> lines) throws IOException {
+        try (OutputStream raw = gateway.createAppData("signatures");
+             GZIPOutputStream gzip = new GZIPOutputStream(raw);
+             OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8)) {
+            for (String line : lines) {
+                writer.write(line);
+                writer.write('\n');
+            }
+        }
     }
 
     /**
@@ -195,7 +244,7 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
      */
     private void writeMigrationDebug(AppCloudForgeMigrationGateway gateway, long startedAt, boolean exportAll,
                                      Set<String> inScopeSpaceKeys, int scanned, int exported, int totalSignatures,
-                                     int skippedOutOfScope, int corrupt, String status) {
+                                     int skippedOutOfScope, int corrupt, int chunks, String status) {
         String transferId;
         try {
             transferId = gateway.getTransferId();
@@ -211,6 +260,7 @@ public class DigitalSignatureMigrationListener implements DiscoverableForgeListe
             d.addProperty("inScopeSpaceKeys", String.valueOf(inScopeSpaceKeys));
             d.addProperty("scanned", scanned);
             d.addProperty("exported", exported);
+            d.addProperty("chunks", chunks);
             d.addProperty("totalSignatures", totalSignatures);
             d.addProperty("skippedOutOfScope", skippedOutOfScope);
             d.addProperty("corrupt", corrupt);
