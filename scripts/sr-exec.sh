@@ -52,6 +52,9 @@ elif [ "$SRC" = "-" ];                 then GROOVY="$(cat)"
 elif [ -n "$SRC" ] && [ -f "$SRC" ];   then GROOVY="$(cat "$SRC")"
 else echo "sr-exec: no script given (file path, -e '<groovy>', or - for stdin)" >&2; exit 2; fi
 
+# Log the target (stderr — keeps stdout clean for the Groovy output).
+printf '\033[1;34m==>\033[0m ScriptRunner exec @ %s (as %s)\n' "$HOST" "$USER_" >&2
+
 GROOVY="$GROOVY" python3 - "$HOST" "$USER_" "$PASS_" <<'PY'
 import json, os, subprocess, sys
 host, user, pw = sys.argv[1], sys.argv[2], sys.argv[3]
