@@ -144,7 +144,7 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.2.2-atlassian-1</version>
-			<scope>provided</scope>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -212,6 +212,9 @@
 				<version>${amps.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+					<banningExcludes>
+						<exclude>com.google.code.gson:gson</exclude>
+					</banningExcludes>
 					<productVersion>${confluence.version}</productVersion>
 					<enableQuickReload>true</enableQuickReload>
 
